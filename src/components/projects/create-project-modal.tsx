@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { projectCreateSchema, type ProjectCreateInput } from '@/lib/validations/projects';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,15 +20,14 @@ export function CreateProjectModal({ onClose, onSuccess }: CreateProjectModalPro
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(projectCreateSchema),
     defaultValues: {
+      name: '',
+      description: '',
       template: 'agile' as const,
       priority: 'medium' as const,
-      owners: [],
-      managers: [],
-      members: [],
-      guestUsers: [],
-      components: [],
+      components: '',
+      startDate: '',
+      endDate: '',
     },
   });
 
@@ -172,14 +169,14 @@ export function CreateProjectModal({ onClose, onSuccess }: CreateProjectModalPro
                 <Input
                   id="components"
                   placeholder="Frontend, Backend, API, Database"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Simple component parsing for demo
-                  }}
+                  {...register('components')}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                   Enter component names separated by commas
                 </p>
+                {errors.components && (
+                  <p className="mt-2 text-sm text-destructive">{errors.components.message}</p>
+                )}
               </div>
             </div>
 

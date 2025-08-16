@@ -22,14 +22,14 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Projects', href: '/projects', icon: FolderOpen },
-  { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-  { name: 'Issues', href: '/issues', icon: Bug },
-  { name: 'QA Tests', href: '/qa', icon: TestTube },
-  { name: 'Users', href: '/users', icon: Users },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'manager', 'qa_lead', 'team_member', 'guest'] },
+  { name: 'Projects', href: '/projects', icon: FolderOpen, roles: ['admin', 'manager', 'qa_lead', 'team_member'] },
+  { name: 'Tasks', href: '/tasks', icon: CheckSquare, roles: ['admin', 'manager', 'qa_lead', 'team_member'] },
+  { name: 'Issues', href: '/issues', icon: Bug, roles: ['admin', 'manager', 'qa_lead', 'team_member'] },
+  { name: 'QA Tests', href: '/qa', icon: TestTube, roles: ['admin', 'manager', 'qa_lead', 'team_member'] },
+  { name: 'Users', href: '/users', icon: Users, roles: ['admin', 'manager'] },
+  { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['admin', 'manager', 'qa_lead'] },
+  { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin'] },
 ];
 
 const profileNavigation = [
@@ -49,7 +49,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = useSession();
 
-  const isAdmin = session?.user?.roles?.includes('admin') || false;
+  const userRoles = session?.user?.roles || [];
+  const isAdmin = userRoles.includes('admin');
+
+  // Filter navigation items based on user roles
+  const availableNavigation = navigation.filter(item => 
+    item.roles.some(role => userRoles.includes(role))
+  );
 
   const handleLogout = async () => {
     try {
@@ -101,7 +107,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         `}>
           <nav className="p-4 space-y-2">
             {/* Main Navigation */}
-            {navigation.map((item) => (
+            {availableNavigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}

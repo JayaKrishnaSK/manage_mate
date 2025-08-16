@@ -10,7 +10,10 @@ export const projectCreateSchema = z.object({
   qaLeads: z.array(z.string()).optional().default([]),
   members: z.array(z.string()).optional().default([]),
   guestUsers: z.array(z.string()).optional().default([]),
-  components: z.array(z.string()).optional().default([]),
+  components: z.string().optional().transform((val) => {
+    if (!val || val.trim() === '') return [];
+    return val.split(',').map(c => c.trim()).filter(c => c.length > 0);
+  }),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),

@@ -171,7 +171,6 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Revalidate relevant caches
-    revalidateTag(`testcases-${validation.data.projectId}`);
     revalidateTag('testcases');
 
     return NextResponse.json(

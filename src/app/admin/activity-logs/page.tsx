@@ -17,9 +17,9 @@ export default async function AdminActivityLogsPage() {
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-card shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h1 className="text-lg font-medium text-gray-900 mb-6">
+          <h1 className="text-lg font-medium text-foreground mb-6">
             Activity Logs
           </h1>
           <ActivityLogsList />
