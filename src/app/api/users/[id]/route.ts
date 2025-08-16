@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const user = getAuthenticatedUser(request);
+    const user = await getAuthenticatedUser();
     if (!user) {
       throw new AuthError('Authentication required');
     }
@@ -77,7 +77,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const user = getAuthenticatedUser(request);
+    const user = await getAuthenticatedUser();
     if (!user) {
       throw new AuthError('Authentication required');
     }
@@ -183,7 +183,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const user = getAuthenticatedUser(request);
+    const user = await getAuthenticatedUser();
     if (!user) {
       throw new AuthError('Authentication required');
     }

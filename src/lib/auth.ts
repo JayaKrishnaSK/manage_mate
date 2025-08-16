@@ -28,14 +28,14 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 // Generate access token (15 minutes)
 export function generateAccessToken(payload: JWTPayload): string {
   // Remove exp if present to avoid jwt.sign error
-  const { exp, iat, ...rest } = payload as any;
+  const { exp: _exp, iat: _iat, ...rest } = payload as JWTPayload & { exp?: number; iat?: number };
   return jwt.sign(rest, JWT_SECRET, { expiresIn: "15m" });
 }
 
 // Generate refresh token (7 days)
 export function generateRefreshToken(payload: JWTPayload): string {
   // Remove exp if present to avoid jwt.sign error
-  const { exp, iat, ...rest } = payload as any;
+  const { exp: _exp, iat: _iat, ...rest } = payload as JWTPayload & { exp?: number; iat?: number };
   return jwt.sign(rest, JWT_REFRESH_SECRET, { expiresIn: "7d" });
 }
 
