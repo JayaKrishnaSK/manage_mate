@@ -1,17 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginInput } from '@/lib/validations/auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -24,30 +31,26 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginInput) => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      setLoading(true);
+      setError(null);
+
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Login failed');
+      if (result?.error) {
+        setError("Invalid email or password");
+      } else if (result?.ok) {
+        // Successful login, redirect to dashboard
+        window.location.href = "/dashboard";
       }
-
-      // Redirect to dashboard on successful login
-      router.push('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } catch (error) {
+      setError("An unexpected error occurred");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -67,7 +70,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -76,11 +79,13 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="Enter your email"
-                {...register('email')}
-                disabled={isLoading}
+                {...register("email")}
+                disabled={loading}
               />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -92,16 +97,18 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="Enter your password"
-                {...register('password')}
-                disabled={isLoading}
+                {...register("password")}
+                disabled={loading}
               />
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
 
             <div className="text-center">

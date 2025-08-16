@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/db';
-import { Project } from '@/models/Project';
+import { NextRequest, NextResponse } from "next/server";
+import connectToDatabase from "@/lib/db";
+import { Project } from "@/models/Project";
 import { getAuthenticatedUser } from "@/lib/auth-helpers";
-import { hasPermission } from '@/lib/policies';
-import { projectCreateSchema } from '@/lib/validations/projects';
-import { revalidateTag } from 'next/cache';
+import { hasPermission } from "@/lib/policies";
+import { projectCreateSchema } from "@/lib/validations/projects";
+import { revalidateTag } from "next/cache";
 
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
 
 // GET /api/projects - List projects
 export async function GET() {

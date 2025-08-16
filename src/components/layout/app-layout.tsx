@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signOut } from "next-auth/react";
 import { 
   Home, 
   FolderOpen, 
@@ -39,8 +40,10 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
+      await signOut({
+        callbackUrl: "/login",
+        redirect: true,
+      });
     } catch (error) {
       console.error('Logout failed:', error);
     }

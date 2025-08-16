@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import { User } from '@/models/User';
-import { hashPassword, generateAccessToken, generateRefreshToken, setAuthCookies } from '@/lib/auth';
+import { hashPassword } from "@/lib/auth-helpers";
 import { registerSchema } from '@/lib/validations/auth';
 
 export const runtime = 'nodejs';
@@ -56,19 +56,6 @@ export async function POST(request: NextRequest) {
     });
 
     await user.save();
-
-    // Generate tokens
-    const payload = {
-      userId: user._id.toString(),
-      email: user.email,
-      roles: user.roles,
-    };
-
-    const accessToken = generateAccessToken(payload);
-    const refreshToken = generateRefreshToken(payload);
-
-    // Set cookies
-    await setAuthCookies(accessToken, refreshToken);
 
     return NextResponse.json({
       success: true,

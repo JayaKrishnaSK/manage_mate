@@ -9,6 +9,7 @@ import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,10 +29,10 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -39,11 +40,25 @@ export default function RegisterPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error?.message || 'Registration failed');
+        throw new Error(result.error?.message || "Registration failed");
       }
 
-      // Redirect to dashboard on successful registration
-      router.push('/dashboard');
+      // Auto sign in after successful registration
+      const signInResult = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        throw new Error(
+          "Registration successful but login failed. Please try logging in manually."
+        );
+      }
+
+      // Redirect to dashboard on successful registration and login
+      router.push("/dashboard");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
