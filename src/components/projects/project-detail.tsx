@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Project } from './projects-management';
 import { ModulesManagement } from './modules-management';
+import { TeamManagement } from './team-management';
 import { 
   ArrowLeft, 
   Edit, 
@@ -258,14 +259,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
       )}
 
       {activeTab === 'members' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Team management functionality will be implemented.</p>
-          </CardContent>
-        </Card>
+        <TeamManagement projectId={projectId} />
       )}
 
       {activeTab === 'settings' && (

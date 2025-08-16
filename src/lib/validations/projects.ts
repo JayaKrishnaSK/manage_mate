@@ -46,12 +46,16 @@ export const moduleCreateSchema = z.object({
   projectId: z.string().min(1, "Project ID is required"),
   name: z.string().min(1, "Module name is required").max(200),
   description: z.string().min(1, "Description is required").max(2000),
+  status: z
+    .enum(["planning", "in_progress", "testing", "completed", "on_hold"])
+    .default("planning"),
   owners: z.array(z.string()).min(1, "At least one owner is required"),
   contributors: z.array(z.string()).optional().default([]),
   dependencies: z.array(z.string()).optional().default([]),
   startDate: z.string().regex(CUSTOM_DATE_REGEX).optional(),
   endDate: z.string().regex(CUSTOM_DATE_REGEX).optional(),
   estimatedHours: z.number().min(0).optional(),
+  progress: z.number().min(0).max(100).default(0),
   tags: z.array(z.string()).optional().default([]),
 });
 
