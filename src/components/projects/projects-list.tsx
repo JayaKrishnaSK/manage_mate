@@ -153,7 +153,11 @@ export function ProjectsList({ projects, onProjectUpdate }: ProjectsListProps) {
             
             <div className="flex justify-between items-center pt-2">
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.href = `/projects/${project._id}`}
+                >
                   <Eye className="h-4 w-4 mr-1" />
                   View
                 </Button>
