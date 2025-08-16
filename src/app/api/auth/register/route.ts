@@ -3,6 +3,7 @@ import connectToDatabase from '@/lib/db';
 import { User } from '@/models/User';
 import { hashPassword } from "@/lib/auth-helpers";
 import { registerSchema } from '@/lib/validations/auth';
+import { logActivity, ACTIVITY_ACTIONS, ACTIVITY_RESOURCES } from '@/lib/activity-logger';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +57,16 @@ export async function POST(request: NextRequest) {
     });
 
     await user.save();
+
+    // Log activity
+    await logActivity({
+      userId: user._id.toString(),
+      action: ACTIVITY_ACTIONS.USER_REGISTER,
+      resource: ACTIVITY_RESOURCES.USER,
+      resourceId: user._id.toString(),
+      details: { email, name, roles: user.roles },
+      request,
+    });
 
     return NextResponse.json({
       success: true,

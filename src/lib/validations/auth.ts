@@ -63,6 +63,41 @@ export const apiSuccessSchema = z.object({
   message: z.string().optional(),
 });
 
+// Invite schemas
+export const inviteCreateSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  roles: z.array(z.enum(['admin', 'manager', 'qa_lead', 'team_member', 'guest'])).min(1),
+});
+
+export const inviteAcceptSchema = z.object({
+  token: z.string().min(1, 'Invite token is required'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+// Profile schemas
+export const profileUpdateSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+  avatar: z.string().url('Please enter a valid URL').optional(),
+  preferences: z.object({
+    notifications: z.boolean(),
+    emailUpdates: z.boolean(),
+    theme: z.enum(['light', 'dark', 'system']),
+  }).optional(),
+});
+
+// Activity log schema
+export const activityLogCreateSchema = z.object({
+  action: z.string().min(1),
+  resource: z.string().min(1),
+  resourceId: z.string().optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
+});
+
 // Types
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -70,5 +105,9 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type UserCreateInput = z.infer<typeof userCreateSchema>;
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
+export type InviteCreateInput = z.infer<typeof inviteCreateSchema>;
+export type InviteAcceptInput = z.infer<typeof inviteAcceptSchema>;
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+export type ActivityLogCreateInput = z.infer<typeof activityLogCreateSchema>;
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type ApiSuccess = z.infer<typeof apiSuccessSchema>;

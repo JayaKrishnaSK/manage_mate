@@ -4,6 +4,7 @@ import { User } from '@/models/User';
 import { getAuthenticatedUser, AuthError, PermissionError } from '@/lib/auth-helpers';
 import { isAdmin } from '@/lib/policies';
 import { userUpdateSchema } from '@/lib/validations/auth';
+import { logActivity, ACTIVITY_ACTIONS, ACTIVITY_RESOURCES } from '@/lib/activity-logger';
 
 export const runtime = 'nodejs';
 
@@ -137,8 +138,37 @@ export async function PUT(
     }
 
     // Update user
+    const originalRoles = targetUser.roles;
     Object.assign(targetUser, updateData);
     await targetUser.save();
+
+    // Log activity
+    const logDetails: Record<string, unknown> = { updatedFields: Object.keys(updateData) };
+    
+    // Special logging for role changes
+    if (updateData.roles && JSON.stringify(originalRoles) !== JSON.stringify(updateData.roles)) {
+      await logActivity({
+        userId: user.userId,
+        action: ACTIVITY_ACTIONS.USER_ROLE_CHANGED,
+        resource: ACTIVITY_RESOURCES.USER,
+        resourceId: id,
+        details: { 
+          previousRoles: originalRoles, 
+          newRoles: updateData.roles,
+          targetUserId: id 
+        },
+        request,
+      });
+    }
+
+    await logActivity({
+      userId: user.userId,
+      action: ACTIVITY_ACTIONS.USER_UPDATED,
+      resource: ACTIVITY_RESOURCES.USER,
+      resourceId: id,
+      details: logDetails,
+      request,
+    });
 
     // Return user without password
     const userResponse = targetUser.toObject();
@@ -223,6 +253,16 @@ export async function DELETE(
     // Soft delete by setting isActive to false
     targetUser.isActive = false;
     await targetUser.save();
+
+    // Log activity
+    await logActivity({
+      userId: user.userId,
+      action: ACTIVITY_ACTIONS.USER_DEACTIVATED,
+      resource: ACTIVITY_RESOURCES.USER,
+      resourceId: id,
+      details: { targetUserEmail: targetUser.email },
+      request,
+    });
 
     return NextResponse.json({
       success: true,

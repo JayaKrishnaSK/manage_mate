@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import connectToDatabase from '@/lib/db';
+import { Invite } from '@/models/Invite';
 import { User } from '@/models/User';
 import { getAuthenticatedUser, AuthError, PermissionError } from '@/lib/auth-helpers';
 import { isAdmin } from '@/lib/policies';
-import { userCreateSchema } from '@/lib/validations/auth';
-import { hashPassword } from '@/lib/auth';
+import { inviteCreateSchema } from '@/lib/validations/auth';
 import { logActivity, ACTIVITY_ACTIONS, ACTIVITY_RESOURCES } from '@/lib/activity-logger';
 
 export const runtime = 'nodejs';
 
-// GET /api/users - List users (admin only)
+// GET /api/invites - List invites (admin only)
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser();
@@ -26,31 +27,33 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status'); // 'pending', 'used', 'expired'
 
-    const query = search
-      ? {
-          $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-          ],
-        }
-      : {};
+    const query: Record<string, unknown> = {};
+    
+    if (status === 'pending') {
+      query.isUsed = false;
+      query.expiresAt = { $gt: new Date() };
+    } else if (status === 'used') {
+      query.isUsed = true;
+    } else if (status === 'expired') {
+      query.isUsed = false;
+      query.expiresAt = { $lte: new Date() };
+    }
 
-    const [users, total] = await Promise.all([
-      User.find(query)
-        .select('-password')
+    const [invites, total] = await Promise.all([
+      Invite.find(query)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
         .lean(),
-      User.countDocuments(query),
+      Invite.countDocuments(query),
     ]);
 
     return NextResponse.json({
       success: true,
       data: {
-        users,
+        invites,
         pagination: {
           page,
           limit,
@@ -60,7 +63,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Users list error:', error);
+    console.error('Invites list error:', error);
 
     if (error instanceof AuthError || error instanceof PermissionError) {
       return NextResponse.json(
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/users - Create user (admin only)
+// POST /api/invites - Send invite (admin only)
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser();
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate input
-    const validation = userCreateSchema.safeParse(body);
+    const validation = inviteCreateSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
         {
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, roles, isActive } = validation.data;
+    const { email, roles } = validation.data;
 
     await connectToDatabase();
 
@@ -133,47 +136,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a temporary password (should be changed on first login)
-    const temporaryPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await hashPassword(temporaryPassword);
-
-    const newUser = new User({
-      name,
+    // Check if pending invite already exists
+    const existingInvite = await Invite.findOne({
       email,
-      password: hashedPassword,
-      roles,
-      isActive,
+      isUsed: false,
+      expiresAt: { $gt: new Date() },
     });
 
-    await newUser.save();
+    if (existingInvite) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'INVITE_EXISTS',
+            message: 'A pending invite for this email already exists',
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // Generate secure token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    const invite = new Invite({
+      email,
+      roles,
+      token,
+      expiresAt,
+      invitedBy: user.userId,
+    });
+
+    await invite.save();
 
     // Log activity
     await logActivity({
       userId: user.userId,
-      action: ACTIVITY_ACTIONS.USER_CREATED,
-      resource: ACTIVITY_RESOURCES.USER,
-      resourceId: newUser._id.toString(),
-      details: { name, email, roles, isActive },
+      action: ACTIVITY_ACTIONS.INVITE_SENT,
+      resource: ACTIVITY_RESOURCES.INVITE,
+      resourceId: invite._id.toString(),
+      details: { email, roles },
       request,
     });
 
-    // Return user without password
-    const userResponse = newUser.toObject();
-    delete userResponse.password;
+    // In production, send email here
+    const inviteLink = `${process.env.NEXTAUTH_URL}/invite/${token}`;
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          user: userResponse,
-          temporaryPassword, // In production, this should be sent via email
+          invite: {
+            email,
+            roles,
+            expiresAt,
+            inviteLink, // In production, this should be sent via email only
+          },
         },
-        message: 'User created successfully',
+        message: 'Invite sent successfully',
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('User creation error:', error);
+    console.error('Invite creation error:', error);
 
     if (error instanceof AuthError || error instanceof PermissionError) {
       return NextResponse.json(
