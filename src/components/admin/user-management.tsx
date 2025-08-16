@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InviteUserModal } from './invite-user-modal';
 import { UserList } from './user-list';
 
@@ -82,30 +83,45 @@ export function UserManagement() {
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading...</div>;
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex justify-between items-center">
-        <form onSubmit={handleSearch} className="flex space-x-2">
-          <Input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
-          />
-          <Button type="submit" variant="outline">
-            Search
-          </Button>
-        </form>
-        
-        <Button onClick={() => setShowInviteModal(true)}>
-          Invite User
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Search & Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+            <form onSubmit={handleSearch} className="flex space-x-2 flex-1">
+              <Input
+                type="text"
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="max-w-sm"
+              />
+              <Button type="submit" variant="outline">
+                Search
+              </Button>
+            </form>
+            
+            <Button onClick={() => setShowInviteModal(true)}>
+              Invite User
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* User List */}
       <UserList 
@@ -115,31 +131,35 @@ export function UserManagement() {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex justify-center space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page <= 1}
-          >
-            Previous
-          </Button>
-          
-          <span className="flex items-center px-4">
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
-          
-          <Button
-            variant="outline"
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.totalPages}
-          >
-            Next
-          </Button>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+              >
+                Previous
+              </Button>
+              
+              <span className="flex items-center px-4 text-sm text-muted-foreground">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Stats */}
-      <div className="text-sm text-gray-500 text-center">
+      <div className="text-sm text-muted-foreground text-center">
         Showing {users.length} of {pagination.total} users
       </div>
 
