@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, X } from "lucide-react";
-import { projectCreateSchema, type ProjectCreateInput } from "@/lib/validations/projects";
 
-interface CreateProjectModalProps {
+interface CreateModuleModalProps {
+  projectId: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -17,6 +16,13 @@ interface CreateProjectModalProps {
 interface User {
   _id: string;
   name: string;
+}
+
+interface Module {
+  _id: string;
+  name: string;
+  description: string;
+  status: string;
 }
 
 // Custom Multi-Select Component
@@ -132,16 +138,135 @@ function MultiSelect({
   );
 }
 
-export function CreateProjectModal({
+// Module Multi-Select Component
+interface ModuleSelectProps {
+  options: Module[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  hasError?: boolean;
+}
+
+function ModuleSelect({
+  options,
+  value,
+  onChange,
+  placeholder = "Select modules...",
+  hasError = false,
+}: ModuleSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = (moduleId: string) => {
+    const newValue = value.includes(moduleId)
+      ? value.filter((id) => id !== moduleId)
+      : [...value, moduleId];
+    onChange(newValue);
+  };
+
+  const removeModule = (moduleId: string) => {
+    onChange(value.filter((id) => id !== moduleId));
+  };
+
+  const selectedModules = options.filter((module) => value.includes(module._id));
+
+  return (
+    <div className="relative">
+      <div
+        className={`
+          flex min-h-[48px] w-full rounded-md border bg-white px-3 py-2 text-sm cursor-pointer
+          focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2
+          ${
+            hasError
+              ? "border-red-500 ring-red-500"
+              : "border-input hover:border-gray-400"
+          }
+          transition-colors
+        `}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+          {selectedModules.length > 0 ? (
+            selectedModules.map((module) => (
+              <span
+                key={module._id}
+                className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium"
+              >
+                {module.name}
+                <X
+                  size={12}
+                  className="cursor-pointer hover:text-blue-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeModule(module._id);
+                  }}
+                />
+              </span>
+            ))
+          ) : (
+            <span className="text-muted-foreground">{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown
+          size={16}
+          className={`text-gray-400 transition-transform ml-2 flex-shrink-0 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-500">
+              No modules available
+            </div>
+          ) : (
+            options.map((module) => (
+              <div
+                key={module._id}
+                className={`
+                  px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition-colors
+                  ${
+                    value.includes(module._id)
+                      ? "bg-gray-50 text-gray-900 font-medium"
+                      : "text-gray-700"
+                  }
+                `}
+                onClick={() => handleToggle(module._id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium">{module.name}</span>
+                    <span className="text-xs text-gray-500 ml-2">({module.status})</span>
+                  </div>
+                  {value.includes(module._id) && (
+                    <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function CreateModuleModal({
+  projectId,
   onClose,
   onSuccess,
-}: CreateProjectModalProps) {
+}: CreateModuleModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [availableModules, setAvailableModules] = useState<Module[]>([]);
 
-  // Fetch users on mount
+  // Fetch users and modules on mount
   useEffect(() => {
+    // Fetch users
     fetch("/api/users")
       .then((res) => res.json())
       .then(({ data }) => {
@@ -150,7 +275,17 @@ export function CreateProjectModal({
       .catch(() => {
         setUsers([]);
       });
-  }, []);
+
+    // Fetch existing modules for dependency selection
+    fetch(`/api/modules?projectId=${projectId}`)
+      .then((res) => res.json())
+      .then(({ data }) => {
+        setAvailableModules(Array.isArray(data.modules) ? data.modules : []);
+      })
+      .catch(() => {
+        setAvailableModules([]);
+      });
+  }, [projectId]);
 
   const {
     register,
@@ -160,29 +295,42 @@ export function CreateProjectModal({
     watch,
   } = useForm({
     defaultValues: {
+      projectId,
       name: "",
       description: "",
-      template: "agile" as const,
-      priority: "medium" as const,
-      components: "",
+      status: "planning" as const,
+      owners: [],
+      contributors: [],
+      dependencies: [],
       startDate: "",
       endDate: "",
-      owners: [],
-      managers: [],
-      qaLeads: [],
-      members: [],
-      guestUsers: [],
+      estimatedHours: 0,
+      progress: 0,
+      tags: [],
     },
   });
 
   const watchedValues = watch();
 
   const onSubmit = async (data: Record<string, unknown>) => {
+    // Validate manually
+    if (!data.name || typeof data.name !== 'string') {
+      setError("Module name is required");
+      return;
+    }
+    if (!data.description || typeof data.description !== 'string') {
+      setError("Description is required");
+      return;
+    }
+    if (!data.owners || !Array.isArray(data.owners) || data.owners.length === 0) {
+      setError("At least one owner is required");
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/projects", {
+      const response = await fetch("/api/modules", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -193,7 +341,7 @@ export function CreateProjectModal({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error?.message || "Failed to create project");
+        throw new Error(result.error?.message || "Failed to create module");
       }
 
       onSuccess();
@@ -210,13 +358,11 @@ export function CreateProjectModal({
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
       <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <CardHeader>
-          <CardTitle>Create New Project</CardTitle>
+          <CardTitle>Create New Module</CardTitle>
         </CardHeader>
         <CardContent>
           <form
-            onSubmit={handleSubmit(onSubmit, (formErrors) => {
-              console.error("Form validation errors:", formErrors);
-            })}
+            onSubmit={handleSubmit(onSubmit)}
             className="space-y-6"
           >
             {/* Basic Information */}
@@ -230,14 +376,12 @@ export function CreateProjectModal({
                   htmlFor="name"
                   className="block text-sm font-medium text-foreground mb-2"
                 >
-                  Project Name *
+                  Module Name *
                 </label>
                 <Input
                   id="name"
-                  {...register("name", {
-                    required: "Project name is required",
-                  })}
-                  placeholder="Enter project name"
+                  {...register("name")}
+                  placeholder="Enter module name"
                   className={
                     errors.name
                       ? "border-red-500 focus-visible:ring-red-500"
@@ -260,9 +404,7 @@ export function CreateProjectModal({
                 </label>
                 <textarea
                   id="description"
-                  {...register("description", {
-                    required: "Description is required",
-                  })}
+                  {...register("description")}
                   rows={3}
                   className={`
                     flex min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm ring-offset-background 
@@ -274,7 +416,7 @@ export function CreateProjectModal({
                         : "border-input focus-visible:ring-ring hover:border-gray-400"
                     }
                   `}
-                  placeholder="Enter project description"
+                  placeholder="Enter module description"
                 />
                 {errors.description && (
                   <p className="mt-2 text-sm text-red-500">
@@ -283,164 +425,63 @@ export function CreateProjectModal({
                 )}
               </div>
 
-              {/* Owners */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Owners *
-                </label>
-                <MultiSelect
-                  options={users}
-                  value={watchedValues.owners}
-                  onChange={(value) => setValue("owners", value as never)}
-                  placeholder="Select project owners..."
-                  hasError={!!errors.owners}
-                />
-                {errors.owners && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {errors.owners.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Managers */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Managers
-                </label>
-                <MultiSelect
-                  options={users}
-                  value={watchedValues.managers}
-                  onChange={(value) => setValue("managers", value as never)}
-                  placeholder="Select project managers..."
-                  hasError={!!errors.managers}
-                />
-                {errors.managers && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {errors.managers.message}
-                  </p>
-                )}
-              </div>
-
-              {/* QA Leads */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  QA Leads
-                </label>
-                <MultiSelect
-                  options={users}
-                  value={watchedValues.qaLeads}
-                  onChange={(value) => setValue("qaLeads", value as never)}
-                  placeholder="Select QA leads..."
-                  hasError={!!errors.qaLeads}
-                />
-                {errors.qaLeads && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {errors.qaLeads.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Members */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Members
-                </label>
-                <MultiSelect
-                  options={users}
-                  value={watchedValues.members}
-                  onChange={(value) => setValue("members", value as never)}
-                  placeholder="Select project members..."
-                  hasError={!!errors.members}
-                />
-                {errors.members && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {errors.members.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Guest Users */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Guest Users
-                </label>
-                <MultiSelect
-                  options={users}
-                  value={watchedValues.guestUsers}
-                  onChange={(value) => setValue("guestUsers", value as never)}
-                  placeholder="Select guest users..."
-                  hasError={!!errors.guestUsers}
-                />
-                {errors.guestUsers && (
-                  <p className="mt-2 text-sm text-red-500">
-                    {errors.guestUsers.message}
-                  </p>
-                )}
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label
-                    htmlFor="template"
+                    htmlFor="status"
                     className="block text-sm font-medium text-foreground mb-2"
                   >
-                    Template
+                    Status
                   </label>
                   <select
-                    id="template"
-                    {...register("template")}
+                    id="status"
+                    {...register("status")}
                     className={`
                       flex h-9 w-full rounded-md border bg-white px-3 py-1 text-sm shadow-sm transition-colors 
                       focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50
                       cursor-pointer hover:border-gray-400
                       ${
-                        errors.template
+                        errors.status
                           ? "border-red-500 focus-visible:ring-red-500"
                           : "border-input focus-visible:ring-ring"
                       }
                     `}
                   >
-                    <option value="agile">Agile</option>
-                    <option value="waterfall">Waterfall</option>
-                    <option value="kanban">Kanban</option>
-                    <option value="custom">Custom</option>
+                    <option value="planning">Planning</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="testing">Testing</option>
+                    <option value="completed">Completed</option>
+                    <option value="on_hold">On Hold</option>
                   </select>
-                  {errors.template && (
+                  {errors.status && (
                     <p className="mt-2 text-sm text-red-500">
-                      {errors.template.message}
+                      {errors.status.message}
                     </p>
                   )}
                 </div>
 
                 <div>
                   <label
-                    htmlFor="priority"
+                    htmlFor="estimatedHours"
                     className="block text-sm font-medium text-foreground mb-2"
                   >
-                    Priority
+                    Estimated Hours
                   </label>
-                  <select
-                    id="priority"
-                    {...register("priority")}
-                    className={`
-                      flex h-9 w-full rounded-md border bg-white px-3 py-1 text-sm shadow-sm transition-colors 
-                      focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50
-                      cursor-pointer hover:border-gray-400
-                      ${
-                        errors.priority
-                          ? "border-red-500 focus-visible:ring-red-500"
-                          : "border-input focus-visible:ring-ring"
-                      }
-                    `}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
-                  {errors.priority && (
+                  <Input
+                    id="estimatedHours"
+                    type="number"
+                    min="0"
+                    {...register("estimatedHours", { valueAsNumber: true })}
+                    placeholder="0"
+                    className={
+                      errors.estimatedHours
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                    }
+                  />
+                  {errors.estimatedHours && (
                     <p className="mt-2 text-sm text-red-500">
-                      {errors.priority.message}
+                      {errors.estimatedHours.message}
                     </p>
                   )}
                 </div>
@@ -497,34 +538,111 @@ export function CreateProjectModal({
               </div>
             </div>
 
-            {/* Components */}
+            {/* Team Assignment */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-foreground">
-                Components
+                Team Assignment
               </h3>
+
+              {/* Owners */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Owners *
+                </label>
+                <MultiSelect
+                  options={users}
+                  value={watchedValues.owners}
+                  onChange={(value) => setValue("owners", value as never)}
+                  placeholder="Select module owners..."
+                  hasError={!!errors.owners}
+                />
+                {errors.owners && (
+                  <p className="mt-2 text-sm text-red-500">
+                    {errors.owners.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Contributors */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Contributors
+                </label>
+                <MultiSelect
+                  options={users}
+                  value={watchedValues.contributors}
+                  onChange={(value) => setValue("contributors", value as never)}
+                  placeholder="Select module contributors..."
+                  hasError={!!errors.contributors}
+                />
+                {errors.contributors && (
+                  <p className="mt-2 text-sm text-red-500">
+                    {errors.contributors.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Dependencies */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground">
+                Dependencies
+              </h3>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Module Dependencies
+                </label>
+                <ModuleSelect
+                  options={availableModules}
+                  value={watchedValues.dependencies}
+                  onChange={(value) => setValue("dependencies", value as never)}
+                  placeholder="Select dependencies..."
+                  hasError={!!errors.dependencies}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Select modules that this module depends on
+                </p>
+                {errors.dependencies && (
+                  <p className="mt-2 text-sm text-red-500">
+                    {errors.dependencies.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground">
+                Additional Information
+              </h3>
+
               <div>
                 <label
-                  htmlFor="components"
+                  htmlFor="tags"
                   className="block text-sm font-medium text-foreground mb-2"
                 >
-                  Project Components (comma-separated)
+                  Tags (comma-separated)
                 </label>
                 <Input
-                  id="components"
-                  placeholder="Frontend, Backend, API, Database"
-                  {...register("components")}
+                  id="tags"
+                  placeholder="frontend, api, critical"
+                  onChange={(e) => {
+                    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(Boolean);
+                    setValue("tags", tags as never);
+                  }}
                   className={
-                    errors.components
+                    errors.tags
                       ? "border-red-500 focus-visible:ring-red-500"
                       : ""
                   }
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Enter component names separated by commas
+                  Enter tags separated by commas
                 </p>
-                {errors.components && (
+                {errors.tags && (
                   <p className="mt-2 text-sm text-red-500">
-                    {errors.components.message}
+                    {errors.tags.message}
                   </p>
                 )}
               </div>
@@ -546,7 +664,7 @@ export function CreateProjectModal({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Project"}
+                {isLoading ? "Creating..." : "Create Module"}
               </Button>
             </div>
           </form>
