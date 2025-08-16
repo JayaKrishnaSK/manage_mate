@@ -17,7 +17,12 @@ Deliver a production‑ready project management platform (Next.js + MongoDB) wit
 - React: React 19 + TypeScript
 - Styling/UI: Tailwind CSS (monochrome theme), shadcn/ui, next-themes
 - Data fetching: RSC (Server Components), Route Handlers, Server Actions, TanStack Query (client islands)
-- Forms: React Hook Form + Zod Resolver
+- Forms: React Hook Form + Zod Resolver (implemented across all forms)
+- All forms implemented with consistent patterns:
+  - useForm() hook with zodResolver for validation
+  - Error state management with form.formState.errors
+  - Loading states during submission
+  - Proper TypeScript typing with validation schemas
 - Charts: Recharts
 - Database: MongoDB Atlas + Mongoose (optional: Prisma for MongoDB)
 - Auth: JWT (access + refresh) via Route Handlers + httpOnly cookies (optional: Auth.js/NextAuth with JWT strategy)
@@ -462,14 +467,59 @@ Acceptance:
 - testcases: projectId, component, priority
 - testruns: projectId, suiteId, createdAt, results.status aggregate fields
 
-## 9) Documentation & Tooling
+## 9) Forms Implementation Standards
+
+All forms in the application follow consistent React Hook Form patterns:
+
+### Implemented Forms:
+- ✅ **Login Form** (`/src/app/login/page.tsx`) - Email/password authentication
+- ✅ **Register Form** (`/src/app/register/page.tsx`) - User registration 
+- ✅ **Profile Form** (`/src/components/forms/profile-form.tsx`) - User profile management
+- ✅ **Invite Form** (`/src/components/forms/invite-form.tsx`) - Accept user invitations
+- ✅ **Create Project Modal** (`/src/components/projects/create-project-modal.tsx`) - Project creation
+
+### Form Implementation Pattern:
+```typescript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { schemaName, type SchemaInput } from '@/lib/validations/...';
+
+export function ComponentForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SchemaInput>({
+    resolver: zodResolver(schemaName),
+  });
+
+  const onSubmit = async (data: SchemaInput) => {
+    // Handle form submission
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Form fields with error handling */}
+    </form>
+  );
+}
+```
+
+### Form Standards:
+- Use Zod schemas for validation defined in `/src/lib/validations/`
+- Consistent error display patterns
+- Loading states during submission  
+- TypeScript types generated from Zod schemas
+- Accessible form labels and error messages
+
+## 10) Documentation & Tooling
 
 - OpenAPI docs (next-swagger-doc or Orval) generated from Zod schemas
 - Storybook for critical UI (forms, boards, modals)
 - ADRs for key decisions (auth, realtime, storage)
 - Changelog, setup, and deployment docs
 
-## 10) Daily Workflow
+## 11) Daily Workflow
 
 1) Standup: goals & blockers
 2) Implement vertical slice
@@ -477,7 +527,7 @@ Acceptance:
 4) Review with PR checklist
 5) Update docs + changelog
 
-## 11) Definition of Done (per Feature)
+## 12) Definition of Done (per Feature)
 
 - Meets acceptance criteria
 - Types, lint, tests pass; coverage threshold met

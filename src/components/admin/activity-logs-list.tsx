@@ -91,15 +91,15 @@ export function ActivityLogsList() {
   };
 
   const getActionColor = (action: string) => {
-    if (action.includes('create')) return 'bg-green-100 text-green-800';
-    if (action.includes('update')) return 'bg-blue-100 text-blue-800';
-    if (action.includes('delete') || action.includes('deactivate')) return 'bg-red-100 text-red-800';
-    if (action.includes('login')) return 'bg-purple-100 text-purple-800';
-    return 'bg-gray-100 text-gray-800';
+    if (action.includes('create')) return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+    if (action.includes('update')) return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+    if (action.includes('delete') || action.includes('deactivate')) return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+    if (action.includes('login')) return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
+    return 'bg-muted text-muted-foreground';
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading...</div>;
+    return <div className="text-center py-4 text-muted-foreground">Loading...</div>;
   }
 
   return (
@@ -129,36 +129,36 @@ export function ActivityLogsList() {
 
       {/* Activity Logs Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-border">
+          <thead className="bg-muted">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Timestamp
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 User ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Action
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Resource
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Details
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 IP Address
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-border">
             {logs.map((log) => (
               <tr key={log._id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                   {formatDate(log.createdAt)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {log.userId}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -168,23 +168,23 @@ export function ActivityLogsList() {
                     {formatAction(log.action)}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {log.resource}
                   {log.resourceId && (
-                    <div className="text-xs text-gray-400">ID: {log.resourceId}</div>
+                    <div className="text-xs text-muted-foreground/70">ID: {log.resourceId}</div>
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs">
                   <details className="cursor-pointer">
-                    <summary className="text-blue-600 hover:text-blue-800">
+                    <summary className="text-primary hover:text-primary/80">
                       View details
                     </summary>
-                    <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-auto">
+                    <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
                       {JSON.stringify(log.details, null, 2)}
                     </pre>
                   </details>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {log.ipAddress || 'Unknown'}
                 </td>
               </tr>
@@ -194,7 +194,7 @@ export function ActivityLogsList() {
       </div>
 
       {logs.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           No activity logs found
         </div>
       )}
@@ -210,7 +210,7 @@ export function ActivityLogsList() {
             Previous
           </Button>
           
-          <span className="flex items-center px-4">
+          <span className="flex items-center px-4 text-muted-foreground">
             Page {pagination.page} of {pagination.totalPages}
           </span>
           
@@ -225,7 +225,7 @@ export function ActivityLogsList() {
       )}
 
       {/* Stats */}
-      <div className="text-sm text-gray-500 text-center">
+      <div className="text-sm text-muted-foreground text-center">
         Showing {logs.length} of {pagination.total} activity logs
       </div>
     </div>

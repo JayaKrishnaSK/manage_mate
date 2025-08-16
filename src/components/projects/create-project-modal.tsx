@@ -172,14 +172,14 @@ export function CreateProjectModal({ onClose, onSuccess }: CreateProjectModalPro
                 <Input
                   id="components"
                   placeholder="Frontend, Backend, API, Database"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Simple component parsing for demo
-                  }}
+                  {...register('components')}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                   Enter component names separated by commas
                 </p>
+                {errors.components && (
+                  <p className="mt-2 text-sm text-destructive">{errors.components.message}</p>
+                )}
               </div>
             </div>
 

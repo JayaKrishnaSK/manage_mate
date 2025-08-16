@@ -129,7 +129,9 @@ JWT payload:
   - settings/
 - Shared Components:
   - EntityLinker, SLAIndicator, EvidenceUploader, NotificationCenter, ActivityFeed
-- Forms: RHF + Zod; progressive enhancement via server actions where appropriate
+- Forms: React Hook Form (RHF) + Zod validation; progressive enhancement via server actions where appropriate
+- All forms use useForm() hook with zodResolver for validation
+- Consistent error handling and loading states across all forms
 
 ## 7) API Endpoints (Route Handlers)
 
