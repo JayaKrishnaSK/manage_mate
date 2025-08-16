@@ -2,11 +2,21 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { issueCreateSchema, type IssueCreateInput } from '@/lib/validations/issues';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface CreateIssueFormData {
+  title: string;
+  description: string;
+  type: 'bug' | 'incident' | 'improvement' | 'request';
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  priority: 'p0' | 'p1' | 'p2' | 'p3';
+  environment: string;
+  stepsToReproduce: string;
+  expectedResult: string;
+  actualResult: string;
+}
 
 interface CreateIssueModalProps {
   onClose: () => void;
@@ -21,16 +31,21 @@ export function CreateIssueModal({ onClose, onSuccess }: CreateIssueModalProps) 
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<IssueCreateInput>({
-    resolver: zodResolver(issueCreateSchema),
+  } = useForm<CreateIssueFormData>({
     defaultValues: {
+      title: '',
+      description: '',
       type: 'bug',
       severity: 'medium',
       priority: 'p2',
+      environment: '',
+      stepsToReproduce: '',
+      expectedResult: '',
+      actualResult: '',
     },
   });
 
-  const onSubmit = async (data: IssueCreateInput) => {
+  const onSubmit = async (data: CreateIssueFormData) => {
     setIsLoading(true);
     setError(null);
 

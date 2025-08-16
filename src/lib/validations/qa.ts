@@ -3,22 +3,17 @@ import { z } from 'zod';
 // Test Case validation schemas
 export const testCaseCreateSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
-  description: z.string().min(1, 'Description is required').max(2000, 'Description must be less than 2000 characters'),
-  projectId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid project ID'),
-  moduleId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid module ID').optional(),
-  priority: z.enum(['critical', 'high', 'medium', 'low']).default('medium'),
-  component: z.string().min(1, 'Component is required').max(100),
   preconditions: z.string().max(1000, 'Preconditions must be less than 1000 characters').optional(),
-  testSteps: z.array(z.object({
-    step: z.number().min(1),
-    action: z.string().min(1, 'Action is required').max(500),
-    expectedResult: z.string().min(1, 'Expected result is required').max(500),
-  })).min(1, 'At least one test step is required'),
-  testData: z.string().max(1000, 'Test data must be less than 1000 characters').optional(),
-  tags: z.array(z.string().trim().min(1)).default([]),
-  automatable: z.boolean().default(false),
-  estimatedTime: z.number().min(0).optional(),
+  priority: z.enum(['critical', 'high', 'medium', 'low']).default('medium'),
+  component: z.string().max(100).optional(),
+  tags: z.string().optional().transform((val) => {
+    if (!val || val.trim() === '') return [];
+    return val.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+  }),
+  version: z.string().default('1.0'),
 });
+
+export type TestCaseCreateInput = z.infer<typeof testCaseCreateSchema>;
 
 export const testCaseUpdateSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters').optional(),
