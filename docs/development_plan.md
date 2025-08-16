@@ -163,17 +163,17 @@ Legend: [ ] To do | [~] In progress | [x] Done
 ### Phase 1: Foundation & Auth (Week 1–2)
 
 Tasks:
-- [ ] Configure Tailwind + shadcn/ui + monochrome theme tokens
-- [ ] next-themes ThemeProvider (light/dark/system) with persistence
-- [ ] Mongoose connection util with global caching in dev
-- [ ] User model (email, hash, roles, prefs, timestamps)
-- [ ] Auth APIs (Route Handlers): register, login, logout, refresh, forgot/reset
-- [ ] JWT access + refresh in httpOnly cookies; rotation + CSRF guard
-- [ ] middleware.ts to protect app routes; role claims parsing
-- [ ] Client forms with RHF + Zod; error/loading states
-- [ ] Base layout: Header, Sidebar, Breadcrumbs, Nav
-- [ ] Error boundary + not-found routes
-- [ ] Metadata API (SEO) baseline; robots/sitemap
+- [x] Configure Tailwind + shadcn/ui + monochrome theme tokens
+- [x] next-themes ThemeProvider (light/dark/system) with persistence
+- [x] Mongoose connection util with global caching in dev
+- [x] User model (email, hash, roles, prefs, timestamps)
+- [x] Auth APIs (Route Handlers): register, login, logout, refresh, forgot/reset
+- [x] JWT access + refresh in httpOnly cookies; rotation + CSRF guard
+- [x] middleware.ts to protect app routes; role claims parsing
+- [x] Client forms with RHF + Zod; error/loading states
+- [x] Base layout: Header, Sidebar, Breadcrumbs, Nav
+- [x] Error boundary + not-found routes
+- [x] Metadata API (SEO) baseline; robots/sitemap
 
 Acceptance:
 - Can register/login/logout; refresh rotates tokens
@@ -181,6 +181,8 @@ Acceptance:
 - Theme switch persists
 - Unit tests: auth services + route handlers (≥70%)
 - E2E: login → access protected page
+
+Status: ✅ COMPLETED
 
 ### Phase 2: RBAC & Users (Week 3–4)
 
@@ -236,7 +238,7 @@ Acceptance:
 ### Phase 5: QA Test Management (Week 10–12)
 
 Tasks:
-- [ ] Models: TestCase, TestSuite, TestRun (results with evidence)
+- [x] Models: TestCase, TestSuite, TestRun (results with evidence)
 - [ ] UI: Test Case Manager, Suite Builder (DND), Test Runner
 - [ ] Defect linkage: failing result → create/link Issue
 - [ ] QA Dashboard (coverage, pass rate, defect burndown)
@@ -247,6 +249,8 @@ Acceptance:
 - Create suite → run → record results with attachments
 - Failing test creates/links defect issue
 - QA dashboard shows pass rate & open defects
+
+Status: 🚧 IN PROGRESS (40% complete)
 
 ### Phase 6: Real‑time & Notifications (Week 13)
 

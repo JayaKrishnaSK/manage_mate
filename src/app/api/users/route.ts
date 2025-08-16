@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 // GET /api/users - List users (admin only)
 export async function GET(request: NextRequest) {
   try {
-    const user = getAuthenticatedUser(request);
+    const user = await getAuthenticatedUser();
     if (!user) {
       throw new AuthError('Authentication required');
     }
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create user (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const user = getAuthenticatedUser(request);
+    const user = await getAuthenticatedUser();
     if (!user) {
       throw new AuthError('Authentication required');
     }
