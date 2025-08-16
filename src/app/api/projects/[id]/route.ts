@@ -11,9 +11,10 @@ export const runtime = 'nodejs';
 // GET /api/projects/[id] - Get project details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function GET(
 
     await connectToDatabase();
 
-    const project = await Project.findById(params.id)
+    const project = await Project.findById(id)
       .populate('owners', 'name email')
       .populate('managers', 'name email')
       .populate('members', 'name email')
@@ -84,9 +85,10 @@ export async function GET(
 // PUT /api/projects/[id] - Update project
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json(
@@ -131,7 +133,7 @@ export async function PUT(
 
     await connectToDatabase();
 
-    const project = await Project.findById(params.id);
+    const project = await Project.findById(id);
     if (!project) {
       return NextResponse.json(
         {
@@ -158,7 +160,7 @@ export async function PUT(
 
     // Revalidate cache
     revalidateTag("projects");
-    revalidateTag(`project-${params.id}`);
+    revalidateTag(`project-${id}`);
 
     return NextResponse.json({
       success: true,
@@ -185,9 +187,10 @@ export async function PUT(
 // DELETE /api/projects/[id] - Soft delete project
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json(
@@ -215,7 +218,7 @@ export async function DELETE(
 
     await connectToDatabase();
 
-    const project = await Project.findById(params.id);
+    const project = await Project.findById(id);
     if (!project) {
       return NextResponse.json(
         {

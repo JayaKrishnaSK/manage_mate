@@ -106,7 +106,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           <div className="text-center">
             <h3 className="text-lg font-medium text-foreground mb-2">Project not found</h3>
             <p className="text-muted-foreground mb-4">
-              The project you're looking for doesn't exist or you don't have access to it.
+              The project you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.
             </p>
             <Button onClick={() => router.push('/projects')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -169,7 +169,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
               <Button
                 key={tab.id}
                 variant={activeTab === tab.id ? 'default' : 'ghost'}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'overview' | 'modules' | 'members' | 'settings')}
                 className="flex items-center space-x-2"
               >
                 <tab.icon className="h-4 w-4" />

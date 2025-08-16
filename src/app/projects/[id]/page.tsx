@@ -2,16 +2,18 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { ProjectDetail } from '@/components/projects/project-detail';
 
 interface ProjectDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const { id } = await params;
+  
   return (
     <AppLayout>
       <div className="p-8">
-        <ProjectDetail projectId={params.id} />
+        <ProjectDetail projectId={id} />
       </div>
     </AppLayout>
   );
