@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/../auth';
 import { UserManagement } from '@/components/admin/user-management';
+import { AppLayout } from '@/components/layout/app-layout';
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -16,13 +17,11 @@ export default async function AdminUsersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h1 className="text-lg font-medium text-gray-900 mb-6">User Management</h1>
-          <UserManagement />
-        </div>
+    <AppLayout>
+      <div className="p-8">
+        <h1 className="text-3xl font-bold text-foreground mb-8">User Management</h1>
+        <UserManagement />
       </div>
-    </div>
+    </AppLayout>
   );
 }

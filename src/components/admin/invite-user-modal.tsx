@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { inviteCreateSchema, type InviteCreateInput } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface InviteUserModalProps {
   onClose: () => void;
@@ -55,55 +56,55 @@ export function InviteUserModal({ onClose, onSuccess }: InviteUserModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Invite New User</h3>
-          
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader>
+          <CardTitle>Invite New User</CardTitle>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                 Email Address
               </label>
               <Input
                 id="email"
                 type="email"
                 {...register('email')}
-                className="mt-1"
                 placeholder="user@example.com"
               />
               {errors.email && (
-                <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-2 text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Roles
               </label>
               <div className="space-y-2">
                 {['admin', 'manager', 'qa_lead', 'team_member', 'guest'].map((role) => (
-                  <label key={role} className="flex items-center">
+                  <label key={role} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
                       value={role}
                       {...register('roles')}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-primary focus:ring-primary border-input rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-900">
+                    <span className="text-sm text-foreground">
                       {role.replace('_', ' ').toUpperCase()}
                     </span>
                   </label>
                 ))}
               </div>
               {errors.roles && (
-                <p className="mt-2 text-sm text-red-600">{errors.roles.message}</p>
+                <p className="mt-2 text-sm text-destructive">{errors.roles.message}</p>
               )}
             </div>
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700">{error}</div>
+              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-4">
+                <div className="text-sm text-destructive">{error}</div>
               </div>
             )}
 
@@ -124,8 +125,8 @@ export function InviteUserModal({ onClose, onSuccess }: InviteUserModalProps) {
               </Button>
             </div>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
