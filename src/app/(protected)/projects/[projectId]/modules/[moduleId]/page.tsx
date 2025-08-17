@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -13,25 +19,25 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -39,7 +45,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -47,7 +53,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DndContext,
   DragEndEvent,
@@ -59,7 +65,7 @@ import {
   closestCorners,
   useSensor,
   useSensors,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   arrayMove,
@@ -67,7 +73,8 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from '@dnd-kit/utilities';
+import { CSS } from "@dnd-kit/utilities";
+import { getSessionUser } from "@/lib/utils";
 
 interface Module {
   _id: string;
@@ -82,7 +89,7 @@ interface Member {
   _id: string;
   userId: string;
   projectId: string;
-  role: 'Manager' | 'BA' | 'Developer' | 'QA' | 'Guest';
+  role: "Manager" | "BA" | "Developer" | "QA" | "Guest";
   user: {
     name: string;
     email: string;
@@ -94,7 +101,7 @@ interface Task {
   title: string;
   moduleId: string;
   assigneeId: string;
-  priority: 'Critical' | 'High' | 'Medium' | 'Low';
+  priority: "Critical" | "High" | "Medium" | "Low";
   startDate: string;
   deadline: string;
   hasConflict: boolean;
@@ -105,10 +112,10 @@ interface Task {
 
 // Kanban board columns
 const KANBAN_COLUMNS = [
-  { id: 'todo', title: 'To Do' },
-  { id: 'in-progress', title: 'In Progress' },
-  { id: 'review', title: 'Review' },
-  { id: 'done', title: 'Done' },
+  { id: "todo", title: "To Do" },
+  { id: "in-progress", title: "In Progress" },
+  { id: "review", title: "Review" },
+  { id: "done", title: "Done" },
 ];
 
 // Task component for Kanban board
@@ -138,17 +145,23 @@ const KanbanTask = ({ task, members }: { task: Task; members: Member[] }) => {
     >
       <div className="flex justify-between">
         <h3 className="font-semibold text-sm">{task.title}</h3>
-        <span className={`px-2 py-1 text-xs rounded-full ${
-          task.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-          task.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-          task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-green-100 text-green-800'
-        }`}>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            task.priority === "Critical"
+              ? "bg-red-100 text-red-800"
+              : task.priority === "High"
+              ? "bg-orange-100 text-orange-800"
+              : task.priority === "Medium"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-green-100 text-green-800"
+          }`}
+        >
           {task.priority}
         </span>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        {members.find(m => m.userId === task.assigneeId)?.user.name || 'Unknown'}
+        {members.find((m) => m.userId === task.assigneeId)?.user.name ||
+          "Unknown"}
       </p>
       {task.hasConflict && (
         <span className="text-red-500 text-xs font-medium">Conflict</span>
@@ -158,20 +171,23 @@ const KanbanTask = ({ task, members }: { task: Task; members: Member[] }) => {
 };
 
 // Column component for Kanban board
-const KanbanColumn = ({ 
-  column, 
-  tasks, 
-  members 
-}: { 
-  column: { id: string; title: string }; 
-  tasks: Task[]; 
-  members: Member[]; 
+const KanbanColumn = ({
+  column,
+  tasks,
+  members,
+}: {
+  column: { id: string; title: string };
+  tasks: Task[];
+  members: Member[];
 }) => {
   return (
     <div className="flex-1 min-w-[250px]">
       <h3 className="font-semibold mb-2">{column.title}</h3>
       <div className="bg-muted p-3 rounded-lg min-h-[100px]">
-        <SortableContext items={tasks.map(t => t._id)} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          items={tasks.map((t) => t._id)}
+          strategy={verticalListSortingStrategy}
+        >
           {tasks.map((task) => (
             <KanbanTask key={task._id} task={task} members={members} />
           ))}
@@ -194,12 +210,18 @@ export default function ModulePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState('');
-  const [newTaskPriority, setNewTaskPriority] = useState<'Critical' | 'High' | 'Medium' | 'Low'>('Medium');
-  const [newTaskStartDate, setNewTaskStartDate] = useState<Date | undefined>(new Date());
-  const [newTaskDeadline, setNewTaskDeadline] = useState<Date | undefined>(new Date());
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskAssignee, setNewTaskAssignee] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState<
+    "Critical" | "High" | "Medium" | "Low"
+  >("Medium");
+  const [newTaskStartDate, setNewTaskStartDate] = useState<Date | undefined>(
+    new Date()
+  );
+  const [newTaskDeadline, setNewTaskDeadline] = useState<Date | undefined>(
+    new Date()
+  );
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   // Initialize sensors for drag and drop
@@ -214,7 +236,7 @@ export default function ModulePage() {
     const fetchModule = async () => {
       if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
@@ -394,7 +416,7 @@ export default function ModulePage() {
     );
   }
 
-  if (!session || !session.user) {
+  if (!getSessionUser(session)) {
     return null; // Router will redirect to login
   }
 
@@ -404,10 +426,14 @@ export default function ModulePage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Module Not Found</CardTitle>
-            <CardDescription>The requested module could not be found.</CardDescription>
+            <CardDescription>
+              The requested module could not be found.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push(`/projects/${projectId}`)}>Back to Project</Button>
+            <Button onClick={() => router.push(`/projects/${projectId}`)}>
+              Back to Project
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -415,9 +441,9 @@ export default function ModulePage() {
   }
 
   // Group tasks by status for Kanban board
-  const tasksByStatus = KANBAN_COLUMNS.map(column => ({
+  const tasksByStatus = KANBAN_COLUMNS.map((column) => ({
     ...column,
-    tasks: tasks.filter(task => task.status === column.id)
+    tasks: tasks.filter((task) => task.status === column.id),
   }));
 
   return (
@@ -460,7 +486,10 @@ export default function ModulePage() {
                 </div>
                 <div>
                   <Label htmlFor="taskAssignee">Assignee</Label>
-                  <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee}>
+                  <Select
+                    value={newTaskAssignee}
+                    onValueChange={setNewTaskAssignee}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -475,7 +504,10 @@ export default function ModulePage() {
                 </div>
                 <div>
                   <Label htmlFor="taskPriority">Priority</Label>
-                  <Select value={newTaskPriority} onValueChange={(value) => setNewTaskPriority(value as any)}>
+                  <Select
+                    value={newTaskPriority}
+                    onValueChange={(value) => setNewTaskPriority(value as any)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -493,10 +525,16 @@ export default function ModulePage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
-                        className={`w-full justify-start text-left font-normal ${!newTaskStartDate && "text-muted-foreground"}`}
+                        className={`w-full justify-start text-left font-normal ${
+                          !newTaskStartDate && "text-muted-foreground"
+                        }`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {newTaskStartDate ? format(newTaskStartDate, "PPP") : <span>Pick a date</span>}
+                        {newTaskStartDate ? (
+                          format(newTaskStartDate, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -515,10 +553,16 @@ export default function ModulePage() {
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
-                        className={`w-full justify-start text-left font-normal ${!newTaskDeadline && "text-muted-foreground"}`}
+                        className={`w-full justify-start text-left font-normal ${
+                          !newTaskDeadline && "text-muted-foreground"
+                        }`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {newTaskDeadline ? format(newTaskDeadline, "PPP") : <span>Pick a date</span>}
+                        {newTaskDeadline ? (
+                          format(newTaskDeadline, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -537,7 +581,7 @@ export default function ModulePage() {
           </Dialog>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
@@ -547,7 +591,7 @@ export default function ModulePage() {
           <CardContent>
             {tasks.length === 0 ? (
               <p className="text-muted-foreground">No tasks created yet.</p>
-            ) : module.flowType === 'Waterfall' ? (
+            ) : module.flowType === "Waterfall" ? (
               // Waterfall view - Table
               <Table>
                 <TableHeader>
@@ -562,34 +606,48 @@ export default function ModulePage() {
                 </TableHeader>
                 <TableBody>
                   {tasks.map((task) => (
-                    <TableRow 
-                      key={task._id} 
+                    <TableRow
+                      key={task._id}
                       className="cursor-pointer hover:bg-muted"
                       onClick={() => openTaskDetail(task)}
                     >
-                      <TableCell className="font-medium">{task.title}</TableCell>
-                      <TableCell>
-                        {members.find(m => m.userId === task.assigneeId)?.user.name || 'Unknown'}
+                      <TableCell className="font-medium">
+                        {task.title}
                       </TableCell>
                       <TableCell>
-                        <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                          task.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-                          task.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                          task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
+                        {members.find((m) => m.userId === task.assigneeId)?.user
+                          .name || "Unknown"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                            task.priority === "Critical"
+                              ? "bg-red-100 text-red-800"
+                              : task.priority === "High"
+                              ? "bg-orange-100 text-orange-800"
+                              : task.priority === "Medium"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
                           {task.priority}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {task.startDate ? new Date(task.startDate).toLocaleDateString() : 'Not set'}
+                        {task.startDate
+                          ? new Date(task.startDate).toLocaleDateString()
+                          : "Not set"}
                       </TableCell>
                       <TableCell>
-                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'Not set'}
+                        {task.deadline
+                          ? new Date(task.deadline).toLocaleDateString()
+                          : "Not set"}
                       </TableCell>
                       <TableCell>
                         {task.hasConflict && (
-                          <span className="text-red-500 text-sm font-medium">Conflict</span>
+                          <span className="text-red-500 text-sm font-medium">
+                            Conflict
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -605,19 +663,24 @@ export default function ModulePage() {
                 onDragEnd={handleDragEnd}
               >
                 <div className="flex space-x-4 overflow-x-auto pb-4">
-                  <SortableContext items={tasks.map(t => t._id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext
+                    items={tasks.map((t) => t._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     {tasksByStatus.map((column) => (
-                      <KanbanColumn 
-                        key={column.id} 
-                        column={column} 
-                        tasks={column.tasks} 
-                        members={members} 
+                      <KanbanColumn
+                        key={column.id}
+                        column={column}
+                        tasks={column.tasks}
+                        members={members}
                       />
                     ))}
                   </SortableContext>
                 </div>
                 <DragOverlay>
-                  {activeTask ? <KanbanTask task={activeTask} members={members} /> : null}
+                  {activeTask ? (
+                    <KanbanTask task={activeTask} members={members} />
+                  ) : null}
                 </DragOverlay>
               </DndContext>
             )}
@@ -630,66 +693,89 @@ export default function ModulePage() {
         <SheetContent side="right" className="w-full sm:max-w-md">
           <SheetHeader>
             <SheetTitle>{selectedTask?.title}</SheetTitle>
-            <SheetDescription>
-              Task details and information
-            </SheetDescription>
+            <SheetDescription>Task details and information</SheetDescription>
           </SheetHeader>
           {selectedTask && (
             <div className="space-y-6 mt-6">
               <div>
                 <h3 className="text-lg font-semibold">Description</h3>
-                <p className="text-muted-foreground">{selectedTask.description || 'No description provided.'}</p>
+                <p className="text-muted-foreground">
+                  {selectedTask.description || "No description provided."}
+                </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold">Assignee</h3>
                 <p className="text-muted-foreground">
-                  {members.find(m => m.userId === selectedTask.assigneeId)?.user.name || 'Unknown'}
+                  {members.find((m) => m.userId === selectedTask.assigneeId)
+                    ?.user.name || "Unknown"}
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold">Priority</h3>
-                <p className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                  selectedTask.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-                  selectedTask.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                  selectedTask.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
+                <p
+                  className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                    selectedTask.priority === "Critical"
+                      ? "bg-red-100 text-red-800"
+                      : selectedTask.priority === "High"
+                      ? "bg-orange-100 text-orange-800"
+                      : selectedTask.priority === "Medium"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
                   {selectedTask.priority}
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold">Dates</h3>
                 <div className="space-y-2">
-                  <p>Start Date: {selectedTask.startDate ? new Date(selectedTask.startDate).toLocaleDateString() : 'Not set'}</p>
-                  <p>Deadline: {selectedTask.deadline ? new Date(selectedTask.deadline).toLocaleDateString() : 'Not set'}</p>
+                  <p>
+                    Start Date:{" "}
+                    {selectedTask.startDate
+                      ? new Date(selectedTask.startDate).toLocaleDateString()
+                      : "Not set"}
+                  </p>
+                  <p>
+                    Deadline:{" "}
+                    {selectedTask.deadline
+                      ? new Date(selectedTask.deadline).toLocaleDateString()
+                      : "Not set"}
+                  </p>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold">Status</h3>
                 <p className="text-muted-foreground capitalize">
-                  {selectedTask.status || 'Not set'}
+                  {selectedTask.status || "Not set"}
                 </p>
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold">Dependencies</h3>
                 <p className="text-muted-foreground">
-                  {selectedTask.dependencies && selectedTask.dependencies.length > 0
-                    ? selectedTask.dependencies.map(dep => 
-                        tasks.find(t => t._id === dep)?.title || 'Unknown Task'
-                      ).join(', ')
-                    : 'No dependencies'}
+                  {selectedTask.dependencies &&
+                  selectedTask.dependencies.length > 0
+                    ? selectedTask.dependencies
+                        .map(
+                          (dep) =>
+                            tasks.find((t) => t._id === dep)?.title ||
+                            "Unknown Task"
+                        )
+                        .join(", ")
+                    : "No dependencies"}
                 </p>
               </div>
-              
+
               {selectedTask.hasConflict && (
                 <div>
                   <h3 className="text-lg font-semibold">Conflict</h3>
-                  <p className="text-red-500">This task has a scheduling conflict with another task.</p>
+                  <p className="text-red-500">
+                    This task has a scheduling conflict with another task.
+                  </p>
                 </div>
               )}
             </div>

@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -15,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { getSessionUser } from "@/lib/utils";
 
 interface Project {
   _id: string;
@@ -35,7 +42,7 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
       if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
@@ -68,8 +75,9 @@ export default function ProjectsPage() {
       </div>
     );
   }
+  const user = getSessionUser(session);
 
-  if (!session || !session.user) {
+  if (!user) {
     return null;
   }
 
@@ -82,7 +90,7 @@ export default function ProjectsPage() {
             Manage your projects and teams
           </p>
         </div>
-        {session.user?.systemRole === "Admin" && (
+        {user.systemRole === "Admin" && (
           <Button onClick={() => router.push("/admin")}>Admin Dashboard</Button>
         )}
       </div>
@@ -99,7 +107,7 @@ export default function ProjectsPage() {
           {projects.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No projects found.</p>
-              {session.user?.systemRole === "Admin" && (
+              {user.systemRole === "Admin" && (
                 <Button className="mt-4" onClick={() => router.push("/admin")}>
                   Create Your First Project
                 </Button>

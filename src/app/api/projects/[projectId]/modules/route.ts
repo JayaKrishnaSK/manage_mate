@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import Module from '@/models/module.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -12,9 +13,10 @@ export async function GET(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -22,10 +24,13 @@ export async function GET(
     }
 
     const { projectId } = await params;
-    const user = session.user.id;
 
     // Check if the user has permission to view modules
-    const hasPermission = await hasProjectPermission(user, projectId, "Guest");
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      projectId,
+      "Guest"
+    );
     if (!hasPermission) {
       return NextResponse.json(
         { error: "You do not have permission to view project modules" },
@@ -56,9 +61,10 @@ export async function POST(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -66,11 +72,14 @@ export async function POST(
     }
 
     const { projectId } = params;
-    const user = session.user.id;
     const { name, description, flowType } = await req.json();
 
     // Check if the user has permission to create modules
-    const hasPermission = await hasProjectPermission(user, projectId, "BA");
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      projectId,
+      "BA"
+    );
     if (!hasPermission) {
       return NextResponse.json(
         { error: "You do not have permission to create project modules" },
@@ -86,8 +95,8 @@ export async function POST(
       name,
       projectId,
       flowType,
-      owner: user, // The user creating the module becomes the owner
-      contributorIds: [user], // The owner is also a contributor
+      owner: sessionUser.id, // The user creating the module becomes the owner
+      contributorIds: [sessionUser.id], // The owner is also a contributor
     });
 
     await newModule.save();

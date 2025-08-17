@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -13,22 +19,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { getSessionUser } from "@/lib/utils";
 
 interface Task {
   _id: string;
   title: string;
   moduleId: string;
   assigneeId: string;
-  priority: 'Critical' | 'High' | 'Medium' | 'Low';
+  priority: "Critical" | "High" | "Medium" | "Low";
   startDate: string;
   deadline: string;
   hasConflict: boolean;
@@ -40,26 +47,32 @@ export default function MyTasksPage() {
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'overdue' | 'today' | 'upcoming'>('all');
+  const [filter, setFilter] = useState<
+    "all" | "overdue" | "today" | "upcoming"
+  >("all");
 
   useEffect(() => {
     const fetchTasks = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
 
       try {
-        const response = await fetch('/api/tasks/my-tasks');
+        const response = await fetch("/api/tasks/my-tasks");
         if (!response.ok) {
-          throw new Error('Failed to fetch tasks');
+          throw new Error("Failed to fetch tasks");
         }
         const data = await response.json();
         setTasks(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching tasks');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching tasks"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -69,16 +82,16 @@ export default function MyTasksPage() {
   }, [session, status, router]);
 
   // Filter tasks based on selected filter
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     const now = new Date();
     const deadline = new Date(task.deadline);
-    
+
     switch (filter) {
-      case 'overdue':
+      case "overdue":
         return deadline < now;
-      case 'today':
+      case "today":
         return deadline.toDateString() === now.toDateString();
-      case 'upcoming':
+      case "upcoming":
         return deadline > now;
       default:
         return true;
@@ -86,32 +99,46 @@ export default function MyTasksPage() {
   });
 
   // Get priority color
-  const getPriorityColor = (priority: Task['priority']) => {
+  const getPriorityColor = (priority: Task["priority"]) => {
     switch (priority) {
-      case 'Critical': return 'destructive';
-      case 'High': return 'orange';
-      case 'Medium': return 'yellow';
-      case 'Low': return 'green';
-      default: return 'default';
+      case "Critical":
+        return "destructive";
+      case "High":
+        return "orange";
+      case "Medium":
+        return "yellow";
+      case "Low":
+        return "green";
+      default:
+        return "default";
     }
   };
 
   // Get status color
   const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'todo': return 'secondary';
-      case 'in-progress': return 'blue';
-      case 'review': return 'purple';
-      case 'done': return 'green';
-      default: return 'secondary';
+      case "todo":
+        return "secondary";
+      case "in-progress":
+        return "blue";
+      case "review":
+        return "purple";
+      case "done":
+        return "green";
+      default:
+        return "secondary";
     }
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (!session || !session.user) {
+  if (!getSessionUser(session)) {
     return null;
   }
 
@@ -123,7 +150,10 @@ export default function MyTasksPage() {
           <p className="text-muted-foreground">Tasks assigned to you</p>
         </div>
         <div className="flex gap-2">
-          <Select value={filter} onValueChange={(value) => setFilter(value as any)}>
+          <Select
+            value={filter}
+            onValueChange={(value) => setFilter(value as any)}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter tasks" />
             </SelectTrigger>
@@ -136,19 +166,22 @@ export default function MyTasksPage() {
           </Select>
         </div>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Task List</CardTitle>
           <CardDescription>
-            {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
+            {filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""}{" "}
+            found
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredTasks.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                {filter === 'all' ? 'No tasks assigned to you.' : `No ${filter} tasks.`}
+                {filter === "all"
+                  ? "No tasks assigned to you."
+                  : `No ${filter} tasks.`}
               </p>
             </div>
           ) : (
@@ -164,8 +197,8 @@ export default function MyTasksPage() {
               </TableHeader>
               <TableBody>
                 {filteredTasks.map((task) => (
-                  <TableRow 
-                    key={task._id} 
+                  <TableRow
+                    key={task._id}
                     className="cursor-pointer hover:bg-muted"
                     onClick={() => router.push(`/tasks/${task._id}`)}
                   >
@@ -177,13 +210,17 @@ export default function MyTasksPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusColor(task.status)}>
-                        {task.status || 'Not Started'}
+                        {task.status || "Not Started"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A'}
+                      {task.deadline
+                        ? new Date(task.deadline).toLocaleDateString()
+                        : "N/A"}
                       {task.hasConflict && (
-                        <span className="ml-2 text-destructive text-xs">Conflict</span>
+                        <span className="ml-2 text-destructive text-xs">
+                          Conflict
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">

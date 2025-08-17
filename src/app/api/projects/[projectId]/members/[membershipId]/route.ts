@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import ProjectMembership from '@/models/projectMembership.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
+import { getSessionUser } from "@/lib/utils";
 
 export async function PATCH(
   req: NextRequest,
@@ -12,9 +13,10 @@ export async function PATCH(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -22,12 +24,11 @@ export async function PATCH(
     }
 
     const { projectId, membershipId } = params;
-    const user = session.user.id;
     const { role } = await req.json();
 
     // Check if the user has permission to update member roles
     const hasPermission = await hasProjectPermission(
-      user,
+      sessionUser.id,
       projectId,
       "Manager"
     );
@@ -78,9 +79,10 @@ export async function DELETE(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -88,11 +90,10 @@ export async function DELETE(
     }
 
     const { projectId, membershipId } = params;
-    const user = session.user.id;
 
     // Check if the user has permission to remove members
     const hasPermission = await hasProjectPermission(
-      user,
+      sessionUser.id,
       projectId,
       "Manager"
     );

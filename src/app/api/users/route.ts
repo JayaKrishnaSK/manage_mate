@@ -3,14 +3,16 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import User from '@/models/user.model';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -18,9 +20,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if the user has admin role
-    if (session.user.systemRole !== 'Admin') {
+    if (sessionUser.systemRole !== "Admin") {
       return NextResponse.json(
-        { error: 'Access denied. Admins only.' },
+        { error: "Access denied. Admins only." },
         { status: 403 }
       );
     }

@@ -5,6 +5,7 @@ import dbConnect from '@/lib/db';
 import ChatMessage from '@/models/chatMessage.model';
 import Module from '@/models/module.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -13,16 +14,16 @@ export async function GET(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
     const { moduleId } = params;
 
     // Connect to the database
@@ -38,7 +39,11 @@ export async function GET(
     }
 
     // Check if the user has permission to view chat in this module
-    const hasPermission = await hasProjectPermission(userId, module.projectId.toString(), 'Guest');
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      module.projectId.toString(),
+      "Guest"
+    );
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'You do not have permission to view chat in this module' },

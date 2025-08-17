@@ -6,6 +6,7 @@ import Task from '@/models/task.model';
 import Project from '@/models/project.model';
 import ProjectMembership from '@/models/projectMembership.model';
 import mongoose from 'mongoose';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -14,16 +15,16 @@ export async function GET(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
     const { projectId } = params;
 
     // Connect to the database
@@ -32,7 +33,7 @@ export async function GET(
     // Check if the user is a member of the project
     const membership = await ProjectMembership.findOne({
       projectId,
-      userId,
+      userId: sessionUser.id,
     });
 
     if (!membership) {

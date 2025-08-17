@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -13,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -21,17 +27,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { getSessionUser } from "@/lib/utils";
 
 interface Project {
   _id: string;
@@ -47,7 +54,7 @@ interface Member {
   id: string;
   userId: string;
   projectId: string;
-  role: 'Manager' | 'BA' | 'Developer' | 'QA' | 'Guest';
+  role: "Manager" | "BA" | "Developer" | "QA" | "Guest";
   user: {
     name: string;
     email: string;
@@ -74,17 +81,20 @@ export default function ProjectDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isCreateModuleOpen, setIsCreateModuleOpen] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState<Member['role']>('Developer');
-  const [newModuleName, setNewModuleName] = useState('');
-  const [newModuleDescription, setNewModuleDescription] = useState('');
-  const [newModuleFlowType, setNewModuleFlowType] = useState<'Waterfall' | 'Agile'>('Waterfall');
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] =
+    useState<Member["role"]>("Developer");
+  const [newModuleName, setNewModuleName] = useState("");
+  const [newModuleDescription, setNewModuleDescription] = useState("");
+  const [newModuleFlowType, setNewModuleFlowType] = useState<
+    "Waterfall" | "Agile"
+  >("Waterfall");
 
   useEffect(() => {
     const fetchProject = async () => {
       if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
@@ -287,7 +297,7 @@ export default function ProjectDashboardPage() {
     );
   }
 
-  if (!session || !session.user) {
+  if (!getSessionUser(session)) {
     return null; // Router will redirect to login
   }
 
@@ -297,10 +307,14 @@ export default function ProjectDashboardPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Project Not Found</CardTitle>
-            <CardDescription>The requested project could not be found.</CardDescription>
+            <CardDescription>
+              The requested project could not be found.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+            <Button onClick={() => router.push("/dashboard")}>
+              Back to Dashboard
+            </Button>
           </CardContent>
         </Card>
       </div>

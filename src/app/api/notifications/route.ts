@@ -3,27 +3,29 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import Notification from '@/models/notification.model';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
-
     // Connect to the database
     await dbConnect();
 
     // Find notifications for this user
-    const notifications = await Notification.find({ recipientId: userId })
+    const notifications = await Notification.find({
+      recipientId: sessionUser.id,
+    })
       .sort({ createdAt: -1 })
       .limit(20); // Limit to 20 most recent notifications
 

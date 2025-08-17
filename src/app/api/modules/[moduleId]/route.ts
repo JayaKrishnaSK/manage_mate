@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import Module from '@/models/module.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
+import { getSessionUser } from "@/lib/utils";
 
 export async function PATCH(
   req: NextRequest,
@@ -12,9 +13,10 @@ export async function PATCH(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -22,7 +24,6 @@ export async function PATCH(
     }
 
     const { moduleId } = params;
-    const userId = session.user.id;
     const { name, description, flowType } = await req.json();
 
     // Connect to the database
@@ -31,17 +32,18 @@ export async function PATCH(
     // Find the module by ID
     const module = await Module.findById(moduleId);
     if (!module) {
-      return NextResponse.json(
-        { error: 'Module not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Module not found" }, { status: 404 });
     }
 
     // Check if the user has permission to update this module
-    const hasPermission = await hasProjectPermission(userId, module.projectId.toString(), 'BA');
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      module.projectId.toString(),
+      "BA"
+    );
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to update this module' },
+        { error: "You do not have permission to update this module" },
         { status: 403 }
       );
     }
@@ -53,9 +55,9 @@ export async function PATCH(
 
     return NextResponse.json(module);
   } catch (error) {
-    console.error('Error updating module:', error);
+    console.error("Error updating module:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -68,9 +70,10 @@ export async function DELETE(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -78,7 +81,6 @@ export async function DELETE(
     }
 
     const { moduleId } = params;
-    const userId = session.user.id;
 
     // Connect to the database
     await dbConnect();
@@ -86,17 +88,18 @@ export async function DELETE(
     // Find the module by ID
     const module = await Module.findById(moduleId);
     if (!module) {
-      return NextResponse.json(
-        { error: 'Module not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Module not found" }, { status: 404 });
     }
 
     // Check if the user has permission to delete this module
-    const hasPermission = await hasProjectPermission(userId, module.projectId.toString(), 'Manager');
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      module.projectId.toString(),
+      "Manager"
+    );
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to delete this module' },
+        { error: "You do not have permission to delete this module" },
         { status: 403 }
       );
     }
@@ -104,11 +107,11 @@ export async function DELETE(
     // Delete the module
     await Module.deleteOne({ _id: moduleId });
 
-    return NextResponse.json({ message: 'Module deleted successfully' });
+    return NextResponse.json({ message: "Module deleted successfully" });
   } catch (error) {
-    console.error('Error deleting module:', error);
+    console.error("Error deleting module:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

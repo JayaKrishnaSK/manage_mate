@@ -6,27 +6,28 @@ import ChatMessage from '@/models/chatMessage.model';
 import Module from '@/models/module.model';
 import { publish } from '@/lib/redis';
 import { hasProjectPermission } from '@/lib/auth/utils';
+import { getSessionUser } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
     const { moduleId, content } = await req.json();
 
     // Validate input
     if (!moduleId || !content) {
       return NextResponse.json(
-        { error: 'Module ID and content are required' },
+        { error: "Module ID and content are required" },
         { status: 400 }
       );
     }
@@ -37,17 +38,18 @@ export async function POST(req: NextRequest) {
     // Check if the module exists
     const module = await Module.findById(moduleId);
     if (!module) {
-      return NextResponse.json(
-        { error: 'Module not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Module not found" }, { status: 404 });
     }
 
     // Check if the user has permission to chat in this module
-    const hasPermission = await hasProjectPermission(userId, module.projectId.toString(), 'Guest');
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      module.projectId.toString(),
+      "Guest"
+    );
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to chat in this module' },
+        { error: "You do not have permission to chat in this module" },
         { status: 403 }
       );
     }
@@ -55,8 +57,8 @@ export async function POST(req: NextRequest) {
     // Create a new chat message
     const newMessage = new ChatMessage({
       moduleId,
-      userId,
-      userName: session.user.name,
+      userId: sessionUser.id,
+      userName: sessionUser.name,
       content,
       timestamp: new Date(),
     });

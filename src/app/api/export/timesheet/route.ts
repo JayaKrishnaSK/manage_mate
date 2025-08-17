@@ -3,26 +3,26 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { Worker } from 'worker_threads';
 import path from 'path';
+import { getSessionUser } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
-
     // Create a worker thread for the export process
     const workerPath = path.resolve('./src/workers/export.worker.js');
     const worker = new Worker(workerPath, {
-      workerData: { userId }
+      workerData: { userId: sessionUser.id },
     });
 
     // Return a job ID immediately
@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
       global.exportJobs = {};
     }
     global.exportJobs[jobId] = {
-      status: 'processing',
-      userId,
+      status: "processing",
+      userId: sessionUser.id,
       startTime: new Date(),
     };
 

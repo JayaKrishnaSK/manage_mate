@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -9,9 +10,10 @@ export async function GET(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -31,9 +33,9 @@ export async function GET(
     const job = global.exportJobs[jobId];
 
     // Check if the job belongs to the user
-    if (job.userId !== session.user.id) {
+    if (job.userId !== sessionUser.id) {
       return NextResponse.json(
-        { error: 'You do not have permission to access this export job' },
+        { error: "You do not have permission to access this export job" },
         { status: 403 }
       );
     }

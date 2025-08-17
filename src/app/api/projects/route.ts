@@ -5,14 +5,16 @@ import dbConnect from '@/lib/db';
 import Project from '@/models/project.model';
 import ProjectMembership from '@/models/projectMembership.model';
 import User from "@/models/user.model";
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -24,7 +26,7 @@ export async function GET(req: NextRequest) {
 
     // Find all projects where the user is a member
     const memberships = await ProjectMembership.find({
-      userId: session.user.id,
+      userId: sessionUser.id,
     });
     const projectIds = memberships.map((membership) => membership.projectId);
 
@@ -47,9 +49,10 @@ export async function POST(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if the user is an Admin
-    if (session.user.systemRole !== "Admin") {
+    if (sessionUser.systemRole !== "Admin") {
       return NextResponse.json(
         { error: "Only administrators can create projects" },
         { status: 403 }
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
     const project = new Project({
       name,
       description,
-      owner: owner || session.user.id, // Default to current user if no owner specified
+      owner: owner || sessionUser.id, // Default to current user if no owner specified
     });
 
     await project.save();
@@ -92,7 +95,7 @@ export async function POST(req: NextRequest) {
     const memberships = [];
 
     // Add the project owner (if different from current user)
-    if (owner && owner !== session.user.id) {
+    if (owner && owner !== sessionUser.id) {
       const ownerMembership = new ProjectMembership({
         projectId: project._id,
         userId: owner,
@@ -103,10 +106,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Add the current user as a Manager if they're not the owner
-    if (session.user.id !== owner) {
+    if (sessionUser.id !== owner) {
       const currentUserMembership = new ProjectMembership({
         projectId: project._id,
-        userId: session.user.id,
+        userId: sessionUser.id,
         role: "Manager",
       });
       await currentUserMembership.save();
@@ -117,7 +120,7 @@ export async function POST(req: NextRequest) {
     if (managers && Array.isArray(managers)) {
       for (const managerId of managers) {
         // Skip if this is the owner or current user (already added)
-        if (managerId === owner || managerId === session.user.id) {
+        if (managerId === owner || managerId === sessionUser.id) {
           continue;
         }
 

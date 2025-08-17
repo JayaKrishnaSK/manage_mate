@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar } from '@/components/ui/calendar';
-import { toast } from 'sonner';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -14,8 +20,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import { useRouter } from "next/navigation";
+import { getSessionUser } from "@/lib/utils";
 
 interface TimeLog {
   _id: string;
@@ -35,22 +42,26 @@ export default function TimesheetPage() {
 
   useEffect(() => {
     const fetchTimeLogs = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
 
       try {
-        const response = await fetch('/api/timelogs');
+        const response = await fetch("/api/timelogs");
         if (!response.ok) {
-          throw new Error('Failed to fetch time logs');
+          throw new Error("Failed to fetch time logs");
         }
         const data = await response.json();
         setTimeLogs(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching time logs');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching time logs"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -59,17 +70,23 @@ export default function TimesheetPage() {
     fetchTimeLogs();
   }, [session, status, router]);
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (!session || !session.user) {
+  if (!getSessionUser(session)) {
     return null; // Router will redirect to login
   }
 
   // Filter time logs by selected date
-  const filteredTimeLogs = date 
-    ? timeLogs.filter(log => new Date(log.date).toDateString() === date.toDateString())
+  const filteredTimeLogs = date
+    ? timeLogs.filter(
+        (log) => new Date(log.date).toDateString() === date.toDateString()
+      )
     : timeLogs;
 
   // Calculate total hours for the selected date
@@ -80,17 +97,19 @@ export default function TimesheetPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Timesheet</h1>
         <div className="flex gap-2">
-          <Button onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+          <Button onClick={() => router.push("/dashboard")}>
+            Back to Dashboard
+          </Button>
           <Button variant="outline">Export to Excel</Button>
         </div>
       </div>
-      
+
       <Tabs defaultValue="table" className="space-y-6">
         <TabsList>
           <TabsTrigger value="table">Table View</TabsTrigger>
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="table">
           <Card>
             <CardHeader>
@@ -99,7 +118,9 @@ export default function TimesheetPage() {
             </CardHeader>
             <CardContent>
               {timeLogs.length === 0 ? (
-                <p className="text-muted-foreground">No time logs recorded yet.</p>
+                <p className="text-muted-foreground">
+                  No time logs recorded yet.
+                </p>
               ) : (
                 <div className="space-y-4">
                   <Table>
@@ -114,10 +135,12 @@ export default function TimesheetPage() {
                     <TableBody>
                       {filteredTimeLogs.map((log) => (
                         <TableRow key={log._id}>
-                          <TableCell>{new Date(log.date).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {new Date(log.date).toLocaleDateString()}
+                          </TableCell>
                           <TableCell>{log.taskTitle}</TableCell>
                           <TableCell>{log.hours}</TableCell>
-                          <TableCell>{log.description || '-'}</TableCell>
+                          <TableCell>{log.description || "-"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -131,7 +154,7 @@ export default function TimesheetPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="calendar">
           <Card>
             <CardHeader>
@@ -148,10 +171,12 @@ export default function TimesheetPage() {
                 />
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold mb-4">
-                    {date ? date.toLocaleDateString() : 'Select a date'}
+                    {date ? date.toLocaleDateString() : "Select a date"}
                   </h3>
                   {filteredTimeLogs.length === 0 ? (
-                    <p className="text-muted-foreground">No time logs for this date.</p>
+                    <p className="text-muted-foreground">
+                      No time logs for this date.
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {filteredTimeLogs.map((log) => (
@@ -161,11 +186,13 @@ export default function TimesheetPage() {
                             <span>{log.hours} hours</span>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {log.description || 'No description'}
+                            {log.description || "No description"}
                           </p>
                         </div>
                       ))}
-                      <p className="font-semibold">Total: {totalHours.toFixed(2)} hours</p>
+                      <p className="font-semibold">
+                        Total: {totalHours.toFixed(2)} hours
+                      </p>
                     </div>
                   )}
                 </div>

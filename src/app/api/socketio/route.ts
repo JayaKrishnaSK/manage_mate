@@ -2,13 +2,15 @@ import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { initSocketIO } from '@/lib/socketio';
+import { getSessionUser } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   try {
     // Get the session to verify the user is authenticated
     const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
+    const sessionUser = getSessionUser(session);
+
+    if (!sessionUser) {
       return new Response("Unauthorized", { status: 401 });
     }
     

@@ -6,6 +6,7 @@ import Task from '@/models/task.model';
 import Module from '@/models/module.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
 import { z } from 'zod';
+import { getSessionUser } from "@/lib/utils";
 
 // Zod schema for validating POST request body
 const createTaskSchema = z.object({
@@ -31,9 +32,10 @@ export async function POST(
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -41,7 +43,6 @@ export async function POST(
     }
 
     const { moduleId } = params;
-    const userId = session.user.id;
 
     // Parse and validate request body
     const body = await req.json();
@@ -59,7 +60,7 @@ export async function POST(
 
     // Check if the user has permission to create tasks in this module
     const hasPermission = await hasProjectPermission(
-      userId,
+      sessionUser.id,
       module.projectId.toString(),
       "Developer"
     );

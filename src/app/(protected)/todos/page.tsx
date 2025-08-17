@@ -1,21 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
-import { Checkbox } from '@/components/ui/checkbox';
-import { X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X } from "lucide-react";
+import { getSessionUser } from "@/lib/utils";
 
 interface Todo {
   _id: string;
   content: string;
   isCompleted: boolean;
   completedAt: string | null;
-  linkedResourceType?: 'Project' | 'Module' | 'Task' | null;
+  linkedResourceType?: "Project" | "Module" | "Task" | null;
   linkedResourceId?: string | null;
   linkedResource?: {
     title: string;
@@ -29,27 +36,31 @@ export default function TodosPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTodo, setNewTodo] = useState('');
+  const [newTodo, setNewTodo] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchTodos = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
 
       try {
-        const response = await fetch('/api/todos');
+        const response = await fetch("/api/todos");
         if (!response.ok) {
-          throw new Error('Failed to fetch todos');
+          throw new Error("Failed to fetch todos");
         }
         const data = await response.json();
         setTodos(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching todos');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching todos"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -62,80 +73,96 @@ export default function TodosPage() {
     if (!newTodo.trim()) return;
 
     try {
-      const response = await fetch('/api/todos', {
-        method: 'POST',
+      const response = await fetch("/api/todos", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ content: newTodo }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add todo');
+        throw new Error(errorData.error || "Failed to add todo");
       }
 
       const newTodoItem = await response.json();
       setTodos([newTodoItem, ...todos]);
-      setNewTodo('');
-      toast.success('To-do added successfully');
+      setNewTodo("");
+      toast.success("To-do added successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while adding the to-do');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while adding the to-do"
+      );
     }
   };
 
   const toggleTodo = async (id: string, isCompleted: boolean) => {
     try {
       const response = await fetch(`/api/todos/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ isCompleted: !isCompleted }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update todo');
+        throw new Error(errorData.error || "Failed to update todo");
       }
 
       const updatedTodo = await response.json();
-      setTodos(todos.map(todo => todo._id === id ? updatedTodo : todo));
-      toast.success('To-do updated successfully');
+      setTodos(todos.map((todo) => (todo._id === id ? updatedTodo : todo)));
+      toast.success("To-do updated successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while updating the to-do');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while updating the to-do"
+      );
     }
   };
 
   const deleteTodo = async (id: string) => {
     try {
       const response = await fetch(`/api/todos/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete todo');
+        throw new Error(errorData.error || "Failed to delete todo");
       }
 
-      setTodos(todos.filter(todo => todo._id !== id));
-      toast.success('To-do deleted successfully');
+      setTodos(todos.filter((todo) => todo._id !== id));
+      toast.success("To-do deleted successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while deleting the to-do');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while deleting the to-do"
+      );
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       addTodo();
     }
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (!session || !session.user) {
+  if (!getSessionUser(session)) {
     return null; // Router will redirect to login
   }
 
@@ -143,9 +170,11 @@ export default function TodosPage() {
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Personal To-Dos</h1>
-        <Button onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+        <Button onClick={() => router.push("/dashboard")}>
+          Back to Dashboard
+        </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
@@ -165,7 +194,7 @@ export default function TodosPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>My To-Dos</CardTitle>
@@ -173,25 +202,35 @@ export default function TodosPage() {
           </CardHeader>
           <CardContent>
             {todos.length === 0 ? (
-              <p className="text-muted-foreground">No to-dos yet. Add one above!</p>
+              <p className="text-muted-foreground">
+                No to-dos yet. Add one above!
+              </p>
             ) : (
               <ul className="space-y-2">
                 {todos.map((todo) => (
-                  <li 
-                    key={todo._id} 
+                  <li
+                    key={todo._id}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted"
                   >
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         checked={todo.isCompleted}
-                        onCheckedChange={() => toggleTodo(todo._id, todo.isCompleted)}
+                        onCheckedChange={() =>
+                          toggleTodo(todo._id, todo.isCompleted)
+                        }
                       />
-                      <span className={todo.isCompleted ? 'line-through text-muted-foreground' : ''}>
+                      <span
+                        className={
+                          todo.isCompleted
+                            ? "line-through text-muted-foreground"
+                            : ""
+                        }
+                      >
                         {todo.content}
                       </span>
                       {todo.linkedResource && (
-                        <a 
-                          href={todo.linkedResource.url} 
+                        <a
+                          href={todo.linkedResource.url}
                           className="text-blue-500 hover:underline text-sm"
                           onClick={(e) => e.stopPropagation()}
                         >

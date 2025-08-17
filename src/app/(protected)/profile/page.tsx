@@ -1,14 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { User, Mail, Shield } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { User, Mail, Shield } from "lucide-react";
+import { getSessionUser } from "@/lib/utils";
 
 interface UserProfile {
   id: string;
@@ -23,28 +30,28 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (!session || !session.user) {
+      if (!getSessionUser(session)) {
         router.push("/login");
         return;
       }
 
       try {
-        const response = await fetch('/api/profile');
+        const response = await fetch("/api/profile");
         if (!response.ok) {
-          throw new Error('Failed to fetch profile');
+          throw new Error("Failed to fetch profile");
         }
         const data = await response.json();
         setProfile(data);
         setName(data.name);
       } catch (error) {
-        toast.error('Failed to load profile information');
+        toast.error("Failed to load profile information");
       } finally {
         setIsLoading(false);
       }
@@ -55,22 +62,22 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/profile/update', {
-        method: 'PUT',
+      const response = await fetch("/api/profile/update", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ name }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update profile');
+        throw new Error(errorData.error || "Failed to update profile");
       }
 
       const updatedProfile = await response.json();
       setProfile(updatedProfile);
-      
+
       // Update the session
       await update({
         ...session,
@@ -79,19 +86,25 @@ export default function ProfilePage() {
           name: updatedProfile.name,
         },
       });
-      
-      toast.success('Profile updated successfully');
+
+      toast.success("Profile updated successfully");
       setIsEditing(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update profile"
+      );
     }
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (!session || !session.user) {
+  if (!getSessionUser(session)) {
     return null;
   }
 
@@ -100,7 +113,7 @@ export default function ProfilePage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Profile</h1>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <Card>
@@ -121,12 +134,14 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Account Details</CardTitle>
-              <CardDescription>Update your personal information</CardDescription>
+              <CardDescription>
+                Update your personal information
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -143,12 +158,14 @@ export default function ProfilePage() {
                     <p className="mt-1 text-sm">{profile?.name}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="email">Email Address</Label>
-                  <p id="email" className="mt-1 text-sm">{profile?.email}</p>
+                  <p id="email" className="mt-1 text-sm">
+                    {profile?.email}
+                  </p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="role">Role</Label>
                   <div className="flex items-center mt-1">
@@ -156,49 +173,62 @@ export default function ProfilePage() {
                     <span className="text-sm">{profile?.systemRole}</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="memberSince">Member Since</Label>
                   <p id="memberSince" className="mt-1 text-sm">
-                    {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
+                    {profile?.createdAt
+                      ? new Date(profile.createdAt).toLocaleDateString()
+                      : "N/A"}
                   </p>
                 </div>
-                
+
                 <div className="pt-4">
                   {isEditing ? (
                     <div className="flex gap-2">
                       <Button onClick={handleSave}>Save Changes</Button>
-                      <Button variant="outline" onClick={() => setIsEditing(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEditing(false)}
+                      >
                         Cancel
                       </Button>
                     </div>
                   ) : (
-                    <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+                    <Button onClick={() => setIsEditing(true)}>
+                      Edit Profile
+                    </Button>
                   )}
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Security</CardTitle>
-              <CardDescription>Manage your account security settings</CardDescription>
+              <CardDescription>
+                Manage your account security settings
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-medium">Password</h3>
-                    <p className="text-sm text-muted-foreground">Last changed 3 months ago</p>
+                    <p className="text-sm text-muted-foreground">
+                      Last changed 3 months ago
+                    </p>
                   </div>
                   <Button variant="outline">Change Password</Button>
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-medium">Two-Factor Authentication</h3>
-                    <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
+                    <p className="text-sm text-muted-foreground">
+                      Add an extra layer of security
+                    </p>
                   </div>
                   <Button variant="outline">Enable</Button>
                 </div>

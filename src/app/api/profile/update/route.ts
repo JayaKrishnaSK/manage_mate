@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/db';
 import User from '@/models/user.model';
 import { z } from 'zod';
+import { getSessionUser } from "@/lib/utils";
 
 // Zod schema for validating profile update
 const updateProfileSchema = z.object({
@@ -14,17 +15,16 @@ export async function PUT(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
-    
     // Parse and validate request body
     const body = await req.json();
     const { name } = updateProfileSchema.parse(body);
@@ -34,16 +34,13 @@ export async function PUT(req: NextRequest) {
 
     // Find and update the user
     const user = await User.findByIdAndUpdate(
-      userId,
+      sessionUser.id,
       { name },
-      { new: true, select: '-password' }
+      { new: true, select: "-password" }
     );
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({

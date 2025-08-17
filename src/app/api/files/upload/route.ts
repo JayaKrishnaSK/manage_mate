@@ -8,6 +8,7 @@ import Module from '@/models/module.model';
 import Task from '@/models/task.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
 import { z } from "zod";
+import { getSessionUser } from "@/lib/utils";
 
 // Zod schema for validating file upload
 const fileUploadSchema = z
@@ -23,9 +24,10 @@ export async function POST(req: NextRequest) {
   try {
     // Get the session
     const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
 
     // Check if the user is authenticated
-    if (!session || !session.user) {
+    if (!sessionUser) {
       return new Response(
         JSON.stringify({
           error: "You must be logged in to access this resource",
@@ -33,8 +35,6 @@ export async function POST(req: NextRequest) {
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
-
-    const userId = session.user.id;
 
     // Connect to the database
     await dbConnect();
@@ -88,7 +88,11 @@ export async function POST(req: NextRequest) {
 
     // Check if the user has permission to upload files to this project
     if (projectId) {
-      const hasPermission = await hasProjectPermission(userId, projectId.toString(), 'Guest');
+      const hasPermission = await hasProjectPermission(
+        sessionUser.id,
+        projectId.toString(),
+        "Guest"
+      );
       if (!hasPermission) {
         return new Response(
           JSON.stringify({ error: 'You do not have permission to upload files to this project' }),
@@ -107,12 +111,12 @@ export async function POST(req: NextRequest) {
 
     // Create a file metadata document in the database
     const newFile = new File({
-      fileName: fileUrl.split('/').pop(), // Extract filename from URL
+      fileName: fileUrl.split("/").pop(), // Extract filename from URL
       originalName: file.name,
       fileSize: file.size,
       fileType: file.type,
       fileUrl,
-      uploadedBy: userId,
+      uploadedBy: sessionUser.id,
       projectId: projectId || undefined,
       moduleId: moduleId || undefined,
       taskId: taskId || undefined,
