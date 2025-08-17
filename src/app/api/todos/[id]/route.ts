@@ -21,7 +21,7 @@ export async function GET(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Get the todo
     const todos = await TodoService.getTodos(sessionUser.id);
@@ -58,7 +58,7 @@ export async function PATCH(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const updates = await req.json();
 
     // Update the todo
@@ -96,7 +96,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Delete the todo
     await TodoService.deleteTodo(sessionUser.id, id);

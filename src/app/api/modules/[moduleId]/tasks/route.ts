@@ -42,7 +42,7 @@ export async function POST(
       );
     }
 
-    const { moduleId } = params;
+    const { moduleId } = await params;
 
     // Parse and validate request body
     const body = await req.json();

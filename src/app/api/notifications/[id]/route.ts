@@ -21,7 +21,7 @@ export async function PATCH(
         { status: 401 }
       );
     }
-    const { id } = params;
+    const { id } = await params;
     const { isRead } = await req.json();
 
     // Connect to the database

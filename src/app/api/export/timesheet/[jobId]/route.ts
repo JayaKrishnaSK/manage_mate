@@ -20,7 +20,7 @@ export async function GET(
       );
     }
 
-    const { jobId } = params;
+    const { jobId } = await params;
 
     // Check job status (in a real app, you'd use Redis or a database)
     if (!global.exportJobs || !global.exportJobs[jobId]) {

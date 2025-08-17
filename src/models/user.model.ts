@@ -34,7 +34,7 @@ const UserSchema: Schema = new Schema({
 });
 
 // Add indexes
-UserSchema.index({ email: 1 });
+// UserSchema.index({ email: 1 });
 UserSchema.index({ createdAt: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

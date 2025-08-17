@@ -25,7 +25,7 @@ export async function GET(
       );
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Connect to the database
     await dbConnect();

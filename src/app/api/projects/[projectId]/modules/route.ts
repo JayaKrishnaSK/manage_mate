@@ -71,7 +71,7 @@ export async function POST(
       );
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
     const { name, description, flowType } = await req.json();
 
     // Check if the user has permission to create modules

@@ -24,7 +24,7 @@ export async function GET(
       );
     }
 
-    const { moduleId } = params;
+    const { moduleId } = await params;
 
     // Connect to the database
     await dbConnect();

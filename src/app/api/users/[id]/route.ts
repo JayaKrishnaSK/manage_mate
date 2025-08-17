@@ -37,7 +37,7 @@ export async function PATCH(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Parse and validate request body
     const body = await req.json();
@@ -101,7 +101,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Connect to the database
     await dbConnect();

@@ -23,7 +23,7 @@ export async function PATCH(
       );
     }
 
-    const { moduleId } = params;
+    const { moduleId } = await params;
     const { name, description, flowType } = await req.json();
 
     // Connect to the database
@@ -80,7 +80,7 @@ export async function DELETE(
       );
     }
 
-    const { moduleId } = params;
+    const { moduleId } = await params;
 
     // Connect to the database
     await dbConnect();

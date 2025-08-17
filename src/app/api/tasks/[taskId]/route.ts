@@ -50,7 +50,7 @@ export async function GET(
       );
     }
 
-    const { taskId } = params;
+    const { taskId } = await params;
 
     // Connect to the database
     await dbConnect();
@@ -107,7 +107,7 @@ export async function PATCH(
       );
     }
 
-    const { taskId } = params;
+    const { taskId } = await params;
 
     // Parse and validate request body
     const body = await req.json();
@@ -220,7 +220,7 @@ export async function DELETE(
       );
     }
 
-    const { taskId } = params;
+    const { taskId } = await params;
 
     // Connect to the database
     await dbConnect();

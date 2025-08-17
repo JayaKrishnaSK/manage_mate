@@ -23,7 +23,7 @@ export async function PATCH(
       );
     }
 
-    const { projectId, membershipId } = params;
+    const { projectId, membershipId } = await params;
     const { role } = await req.json();
 
     // Check if the user has permission to update member roles
@@ -89,7 +89,7 @@ export async function DELETE(
       );
     }
 
-    const { projectId, membershipId } = params;
+    const { projectId, membershipId } = await params;
 
     // Check if the user has permission to remove members
     const hasPermission = await hasProjectPermission(
