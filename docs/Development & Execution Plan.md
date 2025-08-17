@@ -19,6 +19,9 @@
   - `npx create-next-app@latest --typescript --tailwind --eslint`
 - Establish the project structure:
   - `src/app/` (API Routes & Pages)
+  - `src/app/(auth)` (Authentication Pages)
+  - `src/app/(protected)` (Protected Pages)
+  - `src/api` (API Routes)
   - `src/components/` (UI Components: shared, ui)
   - `src/lib/` (Core utilities: db, redis, auth options)
   - `src/models/` (Mongoose Schemas)

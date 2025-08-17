@@ -1,13 +1,15 @@
 ## System Design Document: ManageMate v1.0
 
 **Version:** 2.0
-**Date:** August 16, 2025
+**Date:** August 17, 2025
 **Author:** Senior System Designer
-**Status:** Final
+**Status:** Final (Reflects As-Built System)
 
 ### 1. Overview
 
 This document outlines the system architecture for the ManageMate project management application. The design is based on the provided PRD and subsequent clarifications. The architecture is a modular monolith built on Next.js, leveraging MongoDB for data persistence, Redis for caching and messaging, and Next-Auth for streamlined authentication. The system is designed to be robust, maintainable, and provide a real-time collaborative experience, complete with a personalized workspace that includes a private to-do manager.
+
+*Note: This document has been updated to reflect the final implementation of the codebase as of August 17, 2025. File paths and data models are representative of the production-ready system.*
 
 ### 2. High-Level Architecture
 
@@ -117,6 +119,19 @@ graph TD
 
 ### 4. Data Model (MongoDB Schema)
 
+- **`users`** (`src/models/user.model.ts`)
+- **`projects`** (`src/models/project.model.ts`)
+- **`projectMemberships`** (`src/models/projectMembership.model.ts`)
+- **`modules`** (`src/models/module.model.ts`)
+- **`tasks`** (`src/models/task.model.ts`)
+- **`timeLogs`** (`src/models/timeLog.model.ts`)
+- **`chatMessages`** (`src/models/chatMessage.model.ts`)
+- **`files`** (`src/models/file.model.ts`)
+- **`notifications`** (`src/models/notification.model.ts`)
+- **`personalTodos`** (`src/models/personalTodo.model.ts`)
+
+Below are the detailed schemas for each collection.
+
 - **`users`**
 
   ```json
@@ -130,7 +145,7 @@ graph TD
   }
   ```
 
-  _(Note: Next-Auth will also create its own collections like `accounts`, `sessions` to manage OAuth and session data)._
+  *(Note: Next-Auth will also create its own collections like `accounts`, `sessions` to manage OAuth and session data).*
 
 - **`projects`**
 
@@ -199,21 +214,53 @@ graph TD
   }
   ```
 
-- **`personalTodos` (New Collection)**
-  This collection stores to-do items private to each user. It uses a polymorphic association to link to other resources within the application.
-  ```json
-  {
-    "_id": "ObjectId",
-    "userId": "ObjectId (ref: users, indexed)",
-    "content": "String",
-    "isCompleted": "Boolean (default: false)",
-    "completedAt": "Date (nullable)",
-    "linkedResourceType": "Enum['Project', 'Module', 'Task', null]",
-    "linkedResourceId": "ObjectId (nullable)",
-    "createdAt": "Date",
-    "updatedAt": "Date"
-  }
-  ```
+- **`personalTodos` (`src/models/personalTodo.model.ts`)
+
+This collection stores to-do items private to each user. It uses a polymorphic association to link to other resources within the application.
+
+```json
+{
+  "_id": "ObjectId",
+  "userId": "ObjectId (ref: users, indexed)",
+  "content": "String",
+  "isCompleted": "Boolean (default: false)",
+  "completedAt": "Date (nullable)",
+  "linkedResourceType": "Enum['Project', 'Module', 'Task', null]",
+  "linkedResourceId": "ObjectId (nullable)",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
+- **`timeLogs`**
+  This collection stores time logged by users against specific tasks.
+
+```json
+{
+  "_id": "ObjectId",
+  "taskId": "ObjectId (ref: tasks)",
+  "userId": "ObjectId (ref: users, indexed)",
+  "startTime": "Date",
+  "endTime": "Date",
+  "description": "String",
+  "createdAt": "Date"
+}
+```
+
+- **`chatMessages`**
+  This collection stores all chat messages, linked to either a module or a project channel.
+
+```json
+{
+  "_id": "ObjectId",
+  "senderId": "ObjectId (ref: users)",
+  "moduleId": "ObjectId (ref: modules, optional, indexed)",
+  "projectId": "ObjectId (ref: projects, optional, indexed)",
+  "content": "String",
+  "fileUrl": "String (optional)",
+  "createdAt": "Date"
+}
+```
 
 ### 5. Key Feature Implementation Details
 
