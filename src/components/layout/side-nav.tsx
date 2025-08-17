@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { 
-  Menu, 
-  ChevronLeft, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Menu,
+  ChevronLeft,
   ChevronRight,
   LogOut,
   User,
   Sun,
-  Moon
-} from 'lucide-react';
+  Moon,
+} from "lucide-react";
 import { cn, getSessionUser } from "@/lib/utils";
 import { navigationConfig, type NavItem } from "@/config/navigation";
 import { useTheme } from "@/components/providers/theme-provider";
@@ -156,7 +156,9 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
           {!isCollapsed ? (
             <div className="flex items-center gap-3 justify-between">
               <div className="flex flex-col">
-                <p className="text-sm font-medium">{session?.user?.name}</p>
+                <p className="text-sm font-medium">
+                  {getSessionUser(session)?.name}
+                </p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
               </div>
               <div>
@@ -267,7 +269,9 @@ export function MobileNav() {
           <div className="p-4 border-t">
             <div className="flex items-center gap-3">
               <div className="flex flex-col">
-                <p className="text-sm font-medium">{session?.user?.name}</p>
+                <p className="text-sm font-medium">
+                  {getSessionUser(session)?.name}
+                </p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
               </div>
               <Button

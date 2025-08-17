@@ -1,21 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { Bell, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef } from "react";
+import { Bell, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useSession } from 'next-auth/react';
-import { io } from 'socket.io-client';
+} from "@/components/ui/dropdown-menu";
+import { useSession } from "next-auth/react";
+import { io } from "socket.io-client";
+import { getSessionUser } from "@/lib/utils";
 
 interface Notification {
   id: string;
   message: string;
-  type: 'TaskAssigned' | 'StatusUpdate' | 'ConflictDetected';
+  type: "TaskAssigned" | "StatusUpdate" | "ConflictDetected";
   isRead: boolean;
   link: string;
   createdAt: string;
@@ -31,21 +32,23 @@ export default function NotificationCenter() {
     if (session) {
       // Initialize Socket.IO client
       socketRef.current = io();
-      
+
       // Subscribe to user-specific notifications
-      socketRef.current.emit("subscribe", [`user:${session?.user?.id}`]);
-      
+      socketRef.current.emit("subscribe", [
+        `user:${getSessionUser(session)?.id}`,
+      ]);
+
       // Listen for notifications
-      socketRef.current.on('notification', (data: any) => {
+      socketRef.current.on("notification", (data: any) => {
         // Add the new notification to the list
-        setNotifications(prev => [data, ...prev]);
-        setUnreadCount(prev => prev + 1);
+        setNotifications((prev) => [data, ...prev]);
+        setUnreadCount((prev) => prev + 1);
       });
-      
+
       // Fetch initial notifications
       fetchNotifications();
     }
-    
+
     return () => {
       // Clean up Socket.IO connection
       if (socketRef.current) {
@@ -56,52 +59,50 @@ export default function NotificationCenter() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('/api/notifications');
+      const response = await fetch("/api/notifications");
       if (response.ok) {
         const data = await response.json();
         setNotifications(data);
         setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
       const response = await fetch(`/api/notifications/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ isRead: true }),
       });
-      
+
       if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
         );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
     }
   };
 
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('/api/notifications/mark-all-read', {
-        method: 'PATCH',
+      const response = await fetch("/api/notifications/mark-all-read", {
+        method: "PATCH",
       });
-      
+
       if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => ({ ...n, isRead: true }))
-        );
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error("Error marking all notifications as read:", error);
     }
   };
 
@@ -126,7 +127,7 @@ export default function NotificationCenter() {
             </Button>
           )}
         </div>
-        
+
         {notifications.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             No notifications
@@ -134,23 +135,27 @@ export default function NotificationCenter() {
         ) : (
           <div className="max-h-96 overflow-y-auto">
             {notifications.map((notification) => (
-              <DropdownMenuItem 
-                key={notification.id} 
+              <DropdownMenuItem
+                key={notification.id}
                 className="flex flex-col items-start p-3 cursor-pointer hover:bg-muted"
                 onClick={() => markAsRead(notification.id)}
               >
                 <div className="flex w-full justify-between">
-                  <p className={`text-sm ${!notification.isRead ? 'font-semibold' : ''}`}>
+                  <p
+                    className={`text-sm ${
+                      !notification.isRead ? "font-semibold" : ""
+                    }`}
+                  >
                     {notification.message}
                   </p>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-4 w-4 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setNotifications(prev => 
-                        prev.filter(n => n.id !== notification.id)
+                      setNotifications((prev) =>
+                        prev.filter((n) => n.id !== notification.id)
                       );
                     }}
                   >

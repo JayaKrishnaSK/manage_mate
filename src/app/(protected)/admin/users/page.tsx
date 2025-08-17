@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -12,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,23 +26,24 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { getSessionUser } from "@/lib/utils";
 
 interface User {
   _id: string;
   name: string;
   email: string;
-  systemRole: 'Admin' | 'User';
+  systemRole: "Admin" | "User";
   createdAt: string;
 }
 
@@ -46,27 +53,31 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newUserRole, setNewUserRole] = useState<'Admin' | 'User'>('User');
+  const [newUserRole, setNewUserRole] = useState<"Admin" | "User">("User");
 
   useEffect(() => {
     const fetchUsers = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (session?.user?.systemRole !== 'Admin') {
-        toast.error('Access denied. Admins only.');
+      if (getSessionUser(session)?.systemRole !== "Admin") {
+        toast.error("Access denied. Admins only.");
         setIsLoading(false);
         return;
       }
 
       try {
-        const response = await fetch('/api/users');
+        const response = await fetch("/api/users");
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          throw new Error("Failed to fetch users");
         }
         const data = await response.json();
         setUsers(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching users');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching users"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -86,62 +97,80 @@ export default function AdminUsersPage() {
 
     try {
       const response = await fetch(`/api/users/${editingUser._id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ systemRole: newUserRole }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update user');
+        throw new Error("Failed to update user");
       }
 
       const updatedUser = await response.json();
-      
+
       // Update the user in the local state
-      setUsers(users.map(user => 
-        user._id === editingUser._id ? { ...user, systemRole: newUserRole } : user
-      ));
-      
-      toast.success('User updated successfully');
+      setUsers(
+        users.map((user) =>
+          user._id === editingUser._id
+            ? { ...user, systemRole: newUserRole }
+            : user
+        )
+      );
+
+      toast.success("User updated successfully");
       setIsEditDialogOpen(false);
       setEditingUser(null);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while updating the user');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while updating the user"
+      );
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     try {
       const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete user');
+        throw new Error("Failed to delete user");
       }
 
       // Remove the user from the local state
-      setUsers(users.filter(user => user._id !== userId));
-      
-      toast.success('User deleted successfully');
+      setUsers(users.filter((user) => user._id !== userId));
+
+      toast.success("User deleted successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while deleting the user');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while deleting the user"
+      );
     }
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (session?.user?.systemRole !== 'Admin') {
+  if (getSessionUser(session)?.systemRole !== "Admin") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Access Denied</CardTitle>
-            <CardDescription>You do not have permission to view this page.</CardDescription>
+            <CardDescription>
+              You do not have permission to view this page.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p>This page is only accessible to administrators.</p>
@@ -156,18 +185,20 @@ export default function AdminUsersPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage all users in the system</p>
+          <p className="text-muted-foreground">
+            Manage all users in the system
+          </p>
         </div>
         <Button>
           <span>Add User</span>
         </Button>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>
           <CardDescription>
-            {users.length} user{users.length !== 1 ? 's' : ''} in the system
+            {users.length} user{users.length !== 1 ? "s" : ""} in the system
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -192,7 +223,11 @@ export default function AdminUsersPage() {
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge variant={user.systemRole === 'Admin' ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={
+                          user.systemRole === "Admin" ? "default" : "secondary"
+                        }
+                      >
                         {user.systemRole}
                       </Badge>
                     </TableCell>
@@ -237,25 +272,19 @@ export default function AdminUsersPage() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={editingUser.name}
-                  disabled
-                />
+                <Input id="name" value={editingUser.name} disabled />
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={editingUser.email}
-                  disabled
-                />
+                <Input id="email" value={editingUser.email} disabled />
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
                 <Select
                   value={newUserRole}
-                  onValueChange={(value) => setNewUserRole(value as 'Admin' | 'User')}
+                  onValueChange={(value) =>
+                    setNewUserRole(value as "Admin" | "User")
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -273,9 +302,7 @@ export default function AdminUsersPage() {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveUser}>
-                  Save Changes
-                </Button>
+                <Button onClick={handleSaveUser}>Save Changes</Button>
               </div>
             </div>
           )}
