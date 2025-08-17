@@ -73,8 +73,8 @@ interface Module {
   _id: string;
   name: string;
   projectId: string;
-  flowType: 'Waterfall' | 'Agile';
-  ownerId: string;
+  flowType: "Waterfall" | "Agile";
+  owner: string;
   contributorIds: string[];
 }
 
@@ -212,10 +212,10 @@ export default function ModulePage() {
 
   useEffect(() => {
     const fetchModule = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (!session) {
-        router.push('/login');
+      if (!session || !session.user) {
+        router.push("/login");
         return;
       }
 
@@ -227,12 +227,16 @@ export default function ModulePage() {
             router.push(`/projects/${projectId}`);
             return;
           }
-          throw new Error('Failed to fetch module');
+          throw new Error("Failed to fetch module");
         }
         const data = await response.json();
         setModule(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching the module');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching the module"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -242,7 +246,7 @@ export default function ModulePage() {
       try {
         const response = await fetch(`/api/projects/${projectId}/members`);
         if (!response.ok) {
-          throw new Error('Failed to fetch members');
+          throw new Error("Failed to fetch members");
         }
         const data = await response.json();
         setMembers(data);
@@ -250,7 +254,11 @@ export default function ModulePage() {
           setNewTaskAssignee(data[0].userId); // Set default assignee to first member
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching members');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching members"
+        );
       }
     };
 
@@ -258,12 +266,16 @@ export default function ModulePage() {
       try {
         const response = await fetch(`/api/modules/${moduleId}/tasks`);
         if (!response.ok) {
-          throw new Error('Failed to fetch tasks');
+          throw new Error("Failed to fetch tasks");
         }
         const data = await response.json();
         setTasks(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching tasks');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching tasks"
+        );
       }
     };
 
@@ -275,9 +287,9 @@ export default function ModulePage() {
   const handleCreateTask = async () => {
     try {
       const response = await fetch(`/api/modules/${moduleId}/tasks`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: newTaskTitle,
@@ -291,17 +303,21 @@ export default function ModulePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create task');
+        throw new Error(errorData.error || "Failed to create task");
       }
 
       const newTask = await response.json();
       setTasks([...tasks, newTask]);
-      setNewTaskTitle('');
-      setNewTaskDescription('');
+      setNewTaskTitle("");
+      setNewTaskDescription("");
       setIsCreateTaskOpen(false);
-      toast.success('Task created successfully');
+      toast.success("Task created successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while creating the task');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while creating the task"
+      );
     }
   };
 
@@ -313,7 +329,7 @@ export default function ModulePage() {
   // Handle drag start
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const task = tasks.find(t => t._id === active.id);
+    const task = tasks.find((t) => t._id === active.id);
     if (task) {
       setActiveTask(task);
     }
@@ -330,12 +346,12 @@ export default function ModulePage() {
     }
 
     // Find the task being dragged
-    const task = tasks.find(t => t._id === active.id);
+    const task = tasks.find((t) => t._id === active.id);
     if (!task) return;
 
     // Find the new status based on the column it was dropped in
     const newStatus = over.id as string;
-    
+
     // If the status hasn't changed, do nothing
     if (task.status === newStatus) {
       return;
@@ -344,33 +360,41 @@ export default function ModulePage() {
     try {
       // Update the task status via API
       const response = await fetch(`/api/tasks/${task._id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ status: newStatus }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update task status');
+        throw new Error(errorData.error || "Failed to update task status");
       }
 
       const updatedTask = await response.json();
-      
+
       // Update the task in the local state
-      setTasks(tasks.map(t => t._id === task._id ? updatedTask : t));
-      toast.success('Task status updated successfully');
+      setTasks(tasks.map((t) => (t._id === task._id ? updatedTask : t)));
+      toast.success("Task status updated successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while updating the task status');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while updating the task status"
+      );
     }
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (!session) {
+  if (!session || !session.user) {
     return null; // Router will redirect to login
   }
 

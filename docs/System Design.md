@@ -139,7 +139,7 @@ graph TD
     "_id": "ObjectId",
     "name": "String",
     "description": "String",
-    "ownerId": "ObjectId (ref: users)",
+    "owner": "ObjectId (ref: users)",
     "status": "Enum['Active', 'Archived']", // For soft-deletion
     "createdAt": "Date"
   }
@@ -164,7 +164,7 @@ graph TD
     "name": "String",
     "projectId": "ObjectId (ref: projects)",
     "flowType": "Enum['Waterfall', 'Agile']",
-    "ownerId": "ObjectId (ref: users)", // For display and assignment purposes
+    "owner": "ObjectId (ref: users)", // For display and assignment purposes
     "contributorIds": ["ObjectId (ref: users)"] // For display and assignment
   }
   ```

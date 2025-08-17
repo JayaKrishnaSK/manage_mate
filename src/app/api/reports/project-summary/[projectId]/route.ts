@@ -16,9 +16,9 @@ export async function GET(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }

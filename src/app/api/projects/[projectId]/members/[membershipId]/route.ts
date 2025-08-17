@@ -14,22 +14,26 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
     const { projectId, membershipId } = params;
-    const userId = session.user.id;
+    const user = session.user.id;
     const { role } = await req.json();
 
     // Check if the user has permission to update member roles
-    const hasPermission = await hasProjectPermission(userId, projectId, 'Manager');
+    const hasPermission = await hasProjectPermission(
+      user,
+      projectId,
+      "Manager"
+    );
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to update member roles' },
+        { error: "You do not have permission to update member roles" },
         { status: 403 }
       );
     }
@@ -45,7 +49,7 @@ export async function PATCH(
 
     if (!membership) {
       return NextResponse.json(
-        { error: 'Membership not found' },
+        { error: "Membership not found" },
         { status: 404 }
       );
     }
@@ -54,14 +58,14 @@ export async function PATCH(
     membership.role = role;
     await membership.save();
 
-    // Populate the userId field with user details
-    await membership.populate('userId', 'name email');
+    // Populate the user field with user details
+    await membership.populate("user", "name email");
 
     return NextResponse.json(membership);
   } catch (error) {
-    console.error('Error updating project member role:', error);
+    console.error("Error updating project member role:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -76,21 +80,25 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
     const { projectId, membershipId } = params;
-    const userId = session.user.id;
+    const user = session.user.id;
 
     // Check if the user has permission to remove members
-    const hasPermission = await hasProjectPermission(userId, projectId, 'Manager');
+    const hasPermission = await hasProjectPermission(
+      user,
+      projectId,
+      "Manager"
+    );
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to remove members' },
+        { error: "You do not have permission to remove members" },
         { status: 403 }
       );
     }
@@ -106,7 +114,7 @@ export async function DELETE(
 
     if (!membership) {
       return NextResponse.json(
-        { error: 'Membership not found' },
+        { error: "Membership not found" },
         { status: 404 }
       );
     }
@@ -114,11 +122,11 @@ export async function DELETE(
     // Delete the membership
     await ProjectMembership.deleteOne({ _id: membershipId });
 
-    return NextResponse.json({ message: 'Member removed successfully' });
+    return NextResponse.json({ message: "Member removed successfully" });
   } catch (error) {
-    console.error('Error removing project member:', error);
+    console.error("Error removing project member:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

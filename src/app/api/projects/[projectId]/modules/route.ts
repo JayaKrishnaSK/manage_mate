@@ -14,21 +14,21 @@ export async function GET(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const { projectId } = params;
-    const userId = session.user.id;
+    const { projectId } = await params;
+    const user = session.user.id;
 
     // Check if the user has permission to view modules
-    const hasPermission = await hasProjectPermission(userId, projectId, 'Guest');
+    const hasPermission = await hasProjectPermission(user, projectId, "Guest");
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to view project modules' },
+        { error: "You do not have permission to view project modules" },
         { status: 403 }
       );
     }
@@ -41,9 +41,9 @@ export async function GET(
 
     return NextResponse.json(modules);
   } catch (error) {
-    console.error('Error fetching project modules:', error);
+    console.error("Error fetching project modules:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -58,22 +58,22 @@ export async function POST(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
     const { projectId } = params;
-    const userId = session.user.id;
+    const user = session.user.id;
     const { name, description, flowType } = await req.json();
 
     // Check if the user has permission to create modules
-    const hasPermission = await hasProjectPermission(userId, projectId, 'BA');
+    const hasPermission = await hasProjectPermission(user, projectId, "BA");
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to create project modules' },
+        { error: "You do not have permission to create project modules" },
         { status: 403 }
       );
     }
@@ -86,17 +86,17 @@ export async function POST(
       name,
       projectId,
       flowType,
-      ownerId: userId, // The user creating the module becomes the owner
-      contributorIds: [userId], // The owner is also a contributor
+      owner: user, // The user creating the module becomes the owner
+      contributorIds: [user], // The owner is also a contributor
     });
 
     await newModule.save();
 
     return NextResponse.json(newModule, { status: 201 });
   } catch (error) {
-    console.error('Error creating project module:', error);
+    console.error("Error creating project module:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

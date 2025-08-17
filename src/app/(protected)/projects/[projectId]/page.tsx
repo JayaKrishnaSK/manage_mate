@@ -37,13 +37,14 @@ interface Project {
   _id: string;
   name: string;
   description: string;
-  ownerId: string;
-  status: 'Active' | 'Archived';
+  owner: string;
+  status: "Active" | "Archived";
   createdAt: string;
 }
 
 interface Member {
   _id: string;
+  id: string;
   userId: string;
   projectId: string;
   role: 'Manager' | 'BA' | 'Developer' | 'QA' | 'Guest';
@@ -57,8 +58,8 @@ interface Module {
   _id: string;
   name: string;
   projectId: string;
-  flowType: 'Waterfall' | 'Agile';
-  ownerId: string;
+  flowType: "Waterfall" | "Agile";
+  owner: string;
   contributorIds: string[];
 }
 
@@ -81,10 +82,10 @@ export default function ProjectDashboardPage() {
 
   useEffect(() => {
     const fetchProject = async () => {
-      if (status === 'loading') return;
+      if (status === "loading") return;
 
-      if (!session) {
-        router.push('/login');
+      if (!session || !session.user) {
+        router.push("/login");
         return;
       }
 
@@ -93,15 +94,19 @@ export default function ProjectDashboardPage() {
         const response = await fetch(`/api/projects/${projectId}`);
         if (!response.ok) {
           if (response.status === 404) {
-            router.push('/dashboard');
+            router.push("/dashboard");
             return;
           }
-          throw new Error('Failed to fetch project');
+          throw new Error("Failed to fetch project");
         }
         const data = await response.json();
         setProject(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching the project');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching the project"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -111,12 +116,16 @@ export default function ProjectDashboardPage() {
       try {
         const response = await fetch(`/api/projects/${projectId}/members`);
         if (!response.ok) {
-          throw new Error('Failed to fetch members');
+          throw new Error("Failed to fetch members");
         }
         const data = await response.json();
         setMembers(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching members');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching members"
+        );
       }
     };
 
@@ -124,12 +133,16 @@ export default function ProjectDashboardPage() {
       try {
         const response = await fetch(`/api/projects/${projectId}/modules`);
         if (!response.ok) {
-          throw new Error('Failed to fetch modules');
+          throw new Error("Failed to fetch modules");
         }
         const data = await response.json();
         setModules(data);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An error occurred while fetching modules');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching modules"
+        );
       }
     };
 
@@ -141,9 +154,9 @@ export default function ProjectDashboardPage() {
   const handleAddMember = async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/members`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: newMemberEmail,
@@ -153,68 +166,91 @@ export default function ProjectDashboardPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add member');
+        throw new Error(errorData.error || "Failed to add member");
       }
 
       const newMember = await response.json();
       setMembers([...members, newMember]);
-      setNewMemberEmail('');
+      setNewMemberEmail("");
       setIsAddMemberOpen(false);
-      toast.success('Member added successfully');
+      toast.success("Member added successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while adding the member');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while adding the member"
+      );
     }
   };
 
   const handleRemoveMember = async (membershipId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/members/${membershipId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/projects/${projectId}/members/${membershipId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove member');
+        throw new Error(errorData.error || "Failed to remove member");
       }
 
-      setMembers(members.filter(member => member._id !== membershipId));
-      toast.success('Member removed successfully');
+      setMembers(members.filter((member) => member.id !== membershipId));
+      toast.success("Member removed successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while removing the member');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while removing the member"
+      );
     }
   };
 
-  const handleRoleChange = async (membershipId: string, newRole: Member['role']) => {
+  const handleRoleChange = async (
+    membershipId: string,
+    newRole: Member["role"]
+  ) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/members/${membershipId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
+      const response = await fetch(
+        `/api/projects/${projectId}/members/${membershipId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update member role');
+        throw new Error(errorData.error || "Failed to update member role");
       }
 
       const updatedMember = await response.json();
-      setMembers(members.map(member => 
-        member._id === membershipId ? { ...member, ...updatedMember } : member
-      ));
-      toast.success('Member role updated successfully');
+      setMembers(
+        members.map((member) =>
+          member.id === membershipId ? { ...member, ...updatedMember } : member
+        )
+      );
+      toast.success("Member role updated successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while updating the member role');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while updating the member role"
+      );
     }
   };
 
   const handleCreateModule = async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/modules`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: newModuleName,
@@ -225,25 +261,33 @@ export default function ProjectDashboardPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create module');
+        throw new Error(errorData.error || "Failed to create module");
       }
 
       const newModule = await response.json();
       setModules([...modules, newModule]);
-      setNewModuleName('');
-      setNewModuleDescription('');
+      setNewModuleName("");
+      setNewModuleDescription("");
       setIsCreateModuleOpen(false);
-      toast.success('Module created successfully');
+      toast.success("Module created successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred while creating the module');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while creating the module"
+      );
     }
   };
 
-  if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
-  if (!session) {
+  if (!session || !session.user) {
     return null; // Router will redirect to login
   }
 
@@ -276,22 +320,32 @@ export default function ProjectDashboardPage() {
           <Button>Manage Members</Button>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Project Overview</CardTitle>
-            <CardDescription>Key information about this project</CardDescription>
+            <CardDescription>
+              Key information about this project
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p><span className="font-semibold">Status:</span> {project.status}</p>
-              <p><span className="font-semibold">Created:</span> {new Date(project.createdAt).toLocaleDateString()}</p>
-              <p><span className="font-semibold">Owner:</span> {/* Owner name would be fetched separately */}</p>
+              <p>
+                <span className="font-semibold">Status:</span> {project.status}
+              </p>
+              <p>
+                <span className="font-semibold">Created:</span>{" "}
+                {new Date(project.createdAt).toLocaleDateString()}
+              </p>
+              <p>
+                <span className="font-semibold">Owner:</span>{" "}
+                {/* Owner name would be fetched separately */}
+              </p>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Modules</CardTitle>
@@ -299,8 +353,13 @@ export default function ProjectDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
-              <p>Modules organize your project work into manageable sections.</p>
-              <Dialog open={isCreateModuleOpen} onOpenChange={setIsCreateModuleOpen}>
+              <p>
+                Modules organize your project work into manageable sections.
+              </p>
+              <Dialog
+                open={isCreateModuleOpen}
+                onOpenChange={setIsCreateModuleOpen}
+              >
                 <DialogTrigger asChild>
                   <Button>Create Module</Button>
                 </DialogTrigger>
@@ -326,13 +385,20 @@ export default function ProjectDashboardPage() {
                       <Textarea
                         id="moduleDescription"
                         value={newModuleDescription}
-                        onChange={(e) => setNewModuleDescription(e.target.value)}
+                        onChange={(e) =>
+                          setNewModuleDescription(e.target.value)
+                        }
                         placeholder="Module Description"
                       />
                     </div>
                     <div>
                       <Label htmlFor="flowType">Flow Type</Label>
-                      <Select value={newModuleFlowType} onValueChange={(value) => setNewModuleFlowType(value as 'Waterfall' | 'Agile')}>
+                      <Select
+                        value={newModuleFlowType}
+                        onValueChange={(value) =>
+                          setNewModuleFlowType(value as "Waterfall" | "Agile")
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -347,7 +413,7 @@ export default function ProjectDashboardPage() {
                 </DialogContent>
               </Dialog>
             </div>
-            
+
             {modules.length === 0 ? (
               <p className="text-muted-foreground">No modules created yet.</p>
             ) : (
@@ -365,7 +431,15 @@ export default function ProjectDashboardPage() {
                       <TableCell>{module.name}</TableCell>
                       <TableCell>{module.flowType}</TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm" onClick={() => router.push(`/projects/${projectId}/modules/${module._id}`)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(
+                              `/projects/${projectId}/modules/${module._id}`
+                            )
+                          }
+                        >
                           View
                         </Button>
                       </TableCell>
@@ -376,11 +450,13 @@ export default function ProjectDashboardPage() {
             )}
           </CardContent>
         </Card>
-        
+
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Team Members</CardTitle>
-            <CardDescription>Manage who has access to this project</CardDescription>
+            <CardDescription>
+              Manage who has access to this project
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
@@ -409,7 +485,12 @@ export default function ProjectDashboardPage() {
                     </div>
                     <div>
                       <Label htmlFor="role">Role</Label>
-                      <Select value={newMemberRole} onValueChange={(value) => setNewMemberRole(value as Member['role'])}>
+                      <Select
+                        value={newMemberRole}
+                        onValueChange={(value) =>
+                          setNewMemberRole(value as Member["role"])
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -427,7 +508,7 @@ export default function ProjectDashboardPage() {
                 </DialogContent>
               </Dialog>
             </div>
-            
+
             {members.length === 0 ? (
               <p className="text-muted-foreground">No members added yet.</p>
             ) : (
@@ -442,13 +523,15 @@ export default function ProjectDashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {members.map((member) => (
-                    <TableRow key={member._id}>
+                    <TableRow key={member.id}>
                       <TableCell>{member.user.name}</TableCell>
                       <TableCell>{member.user.email}</TableCell>
                       <TableCell>
-                        <Select 
-                          value={member.role} 
-                          onValueChange={(value) => handleRoleChange(member._id, value as Member['role'])}
+                        <Select
+                          value={member.role}
+                          onValueChange={(value) =>
+                            handleRoleChange(member.id, value as Member["role"])
+                          }
                         >
                           <SelectTrigger className="w-[120px]">
                             <SelectValue />
@@ -463,10 +546,10 @@ export default function ProjectDashboardPage() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => handleRemoveMember(member._id)}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveMember(member.id)}
                         >
                           Remove
                         </Button>
@@ -478,7 +561,7 @@ export default function ProjectDashboardPage() {
             )}
           </CardContent>
         </Card>
-        
+
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>

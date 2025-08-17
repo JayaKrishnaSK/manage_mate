@@ -37,8 +37,8 @@ export default function TimesheetPage() {
     const fetchTimeLogs = async () => {
       if (status === 'loading') return;
 
-      if (!session) {
-        router.push('/login');
+      if (!session || !session.user) {
+        router.push("/login");
         return;
       }
 
@@ -63,7 +63,7 @@ export default function TimesheetPage() {
     return <div className="flex min-h-screen items-center justify-center">Loading...</div>;
   }
 
-  if (!session) {
+  if (!session || !session.user) {
     return null; // Router will redirect to login
   }
 

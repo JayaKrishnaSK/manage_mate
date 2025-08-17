@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
     // Get the session to verify the user is authenticated
     const session = await getServerSession(authOptions);
     
-    if (!session) {
-      return new Response('Unauthorized', { status: 401 });
+    if (!session || !session.user) {
+      return new Response("Unauthorized", { status: 401 });
     }
     
     // Initialize Socket.IO server

@@ -9,10 +9,8 @@ import { z } from 'zod';
 
 // Zod schema for validating POST request body
 const addMemberSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  role: z.enum(['Manager', 'BA', 'Developer', 'QA', 'Guest'], {
-    errorMap: () => ({ message: 'Invalid role' }),
-  }),
+  email: z.email("Invalid email format"),
+  role: z.enum(["Manager", "BA", "Developer", "QA", "Guest"], "Invalid role"),
 });
 
 export async function GET(
@@ -24,21 +22,21 @@ export async function GET(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
     const userId = session.user.id;
 
     // Check if the user has permission to view members
-    const hasPermission = await hasProjectPermission(userId, projectId, 'BA');
+    const hasPermission = await hasProjectPermission(userId, projectId, "BA");
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to view project members' },
+        { error: "You do not have permission to view project members" },
         { status: 403 }
       );
     }
@@ -47,15 +45,24 @@ export async function GET(
     await dbConnect();
 
     // Find all memberships for this project
-    // Populate the userId field with user details (name and email)
-    const memberships = await ProjectMembership.find({ projectId })
-      .populate('userId', 'name email');
+    // Populate the user field with user details (name and email)
+    const memberships = await ProjectMembership.find({ projectId }).populate(
+      "userId"
+    );
 
-    return NextResponse.json(memberships);
-  } catch (error) {
-    console.error('Error fetching project members:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      memberships.map((row) => ({
+        id: row._id,
+        projectId: row.projectId,
+        userId: row.userId.id,
+        role: row.role,
+        user: row.userId,
+      }))
+    );
+  } catch (error) {
+    console.error("Error fetching project members:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -70,25 +77,29 @@ export async function POST(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'You must be logged in to access this resource' },
+        { error: "You must be logged in to access this resource" },
         { status: 401 }
       );
     }
 
-    const { projectId } = params;
+    const { projectId } = await params;
     const userId = session.user.id;
-    
+
     // Parse and validate request body
     const body = await req.json();
     const { email, role } = addMemberSchema.parse(body);
 
     // Check if the user has permission to add members
-    const hasPermission = await hasProjectPermission(userId, projectId, 'Manager');
+    const hasPermission = await hasProjectPermission(
+      userId,
+      projectId,
+      "Manager"
+    );
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'You do not have permission to add project members' },
+        { error: "You do not have permission to add project members" },
         { status: 403 }
       );
     }
@@ -100,7 +111,7 @@ export async function POST(
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
-        { error: 'User with this email not found' },
+        { error: "User with this email not found" },
         { status: 404 }
       );
     }
@@ -113,7 +124,7 @@ export async function POST(
 
     if (existingMembership) {
       return NextResponse.json(
-        { error: 'User is already a member of this project' },
+        { error: "User is already a member of this project" },
         { status: 400 }
       );
     }
@@ -127,13 +138,21 @@ export async function POST(
 
     await newMembership.save();
 
-    // Populate the userId field with user details
-    await newMembership.populate('userId', 'name email');
+    // Populate the user field with user details
+    await newMembership.populate("userId");
 
-    return NextResponse.json(newMembership, { status: 201 });
+    return NextResponse.json(
+      {
+        id: newMembership._id,
+        userId: newMembership.userId.id,
+        role: newMembership.role,
+        user: newMembership.userId,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Error adding project member:', error);
-    
+    console.error("Error adding project member:", error);
+
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -141,9 +160,9 @@ export async function POST(
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

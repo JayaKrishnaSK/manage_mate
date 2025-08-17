@@ -21,7 +21,7 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }
@@ -84,7 +84,7 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
 
     // Check if the user is authenticated
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json(
         { error: "You must be logged in to access this resource" },
         { status: 401 }

@@ -1,11 +1,12 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IProject extends Document {
   name: string;
   description: string;
-  ownerId: mongoose.Types.ObjectId;
-  status: 'Active' | 'Archived';
+  owner: mongoose.Types.ObjectId;
+  status: "Active" | "Archived" | "Completed" | "Paused";
   createdAt: Date;
+  // managers: mongoose.Types.ObjectId[];
 }
 
 const ProjectSchema: Schema = new Schema({
@@ -17,15 +18,19 @@ const ProjectSchema: Schema = new Schema({
     type: String,
     required: true,
   },
-  ownerId: {
+  owner: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
+  // managers: {
+  //   type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  //   required: true,
+  // },
   status: {
     type: String,
-    enum: ['Active', 'Archived'],
-    default: 'Active',
+    enum: ["Active", "Archived", "Completed", "Paused"],
+    default: "Active",
   },
   createdAt: {
     type: Date,
@@ -34,8 +39,9 @@ const ProjectSchema: Schema = new Schema({
 });
 
 // Add indexes
-ProjectSchema.index({ ownerId: 1 });
+ProjectSchema.index({ owner: 1 });
 ProjectSchema.index({ status: 1 });
 ProjectSchema.index({ createdAt: 1 });
 
-export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema);
+export default mongoose.models.Project ||
+  mongoose.model<IProject>("Project", ProjectSchema);

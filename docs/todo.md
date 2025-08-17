@@ -205,3 +205,13 @@ This document breaks down the development of ManageMate into a series of actiona
 - `[x]` Implement Projects UI/navigation
 - `[x]` Implement My Tasks page
 - `[x]` Implement Calendar Page
+
+---
+
+### Post-Deployment Fixes
+
+#### **Project Creation Flow**
+
+- `[x]` Update Admin Dashboard to include proper project owner and manager selection
+- `[x]` Implement complete project creation API with owner/manager assignment
+- `[x]` Remove project creation functionality from regular projects page
