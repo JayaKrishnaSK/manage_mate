@@ -25,6 +25,60 @@ const createTaskSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid deadline format (YYYY-MM-DD)"),
 });
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { moduleId: string } }
+) {
+  try {
+    // Get the session
+    const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
+
+    // Check if the user is authenticated
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "You must be logged in to access this resource" },
+        { status: 401 }
+      );
+    }
+
+    const { moduleId } = await params;
+
+    // Connect to the database
+    await dbConnect();
+
+    // Find the module by ID
+    const module = await Module.findById(moduleId);
+    if (!module) {
+      return NextResponse.json({ error: "Module not found" }, { status: 404 });
+    }
+
+    // Check if the user has permission to view tasks in this module
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      module.projectId.toString(),
+      "Guest"
+    );
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: "You do not have permission to view tasks in this module" },
+        { status: 403 }
+      );
+    }
+
+    // Find all tasks for this module
+    const tasks = await Task.find({ moduleId });
+
+    return NextResponse.json(tasks);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { moduleId: string } }

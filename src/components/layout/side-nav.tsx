@@ -15,9 +15,9 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { navigationConfig, type NavItem } from '@/config/navigation';
-import { useTheme } from '@/components/providers/theme-provider';
+import { cn, getSessionUser } from "@/lib/utils";
+import { navigationConfig, type NavItem } from "@/config/navigation";
+import { useTheme } from "@/components/providers/theme-provider";
 
 interface SideNavProps {
   isCollapsed: boolean;
@@ -28,23 +28,19 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { theme, toggleTheme } = useTheme();
-  const userRole = session?.user?.systemRole || 'User';
+  const userRole = getSessionUser(session)?.systemRole || "User";
 
   // Filter navigation items based on user role
-  const filteredNavItems = navigationConfig.filter(item => 
+  const filteredNavItems = navigationConfig.filter((item) =>
     item.roles.includes(userRole as any)
   );
 
   // Add theme toggle to filtered items
-  const navItemsWithTheme = [...filteredNavItems, {
-    title: 'Toggle Theme',
-    icon: theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />,
-    roles: ['Admin', 'User'],
-    isThemeToggle: true
-  }];
-
   // Recursive function to render navigation items
-  const renderNavItems = (items: (NavItem & { isThemeToggle?: boolean })[], level = 0) => {
+  const renderNavItems = (
+    items: (NavItem & { isThemeToggle?: boolean })[],
+    level = 0
+  ) => {
     return items.map((item) => {
       // Handle theme toggle
       if (item.isThemeToggle) {
@@ -66,12 +62,15 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
       }
 
       const hasChildren = item.children && item.children.length > 0;
-      const isActive = pathname === item.href || (item.children?.some(child => pathname?.startsWith(child.href)));
-      
+      const isActive =
+        pathname === item.href ||
+        item.children?.some((child) => pathname?.startsWith(child.href || ""));
+
       // Filter children based on user role
-      const filteredChildren = item.children?.filter(child => 
-        child.roles.includes(userRole as any)
-      ) || [];
+      const filteredChildren =
+        item.children?.filter((child) =>
+          child.roles.includes(userRole as any)
+        ) || [];
 
       return (
         <div key={item.href}>
@@ -100,7 +99,7 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
               {!isCollapsed && <span>{item.title}</span>}
             </div>
           )}
-          
+
           {!isCollapsed && hasChildren && filteredChildren.length > 0 && (
             <div className="ml-4">
               {renderNavItems(filteredChildren, level + 1)}
@@ -112,7 +111,7 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
   };
 
   return (
-    <div 
+    <div
       className={cn(
         "relative hidden h-screen border-r bg-background md:block",
         isCollapsed ? "w-16" : "w-64"
@@ -130,7 +129,7 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
               <span className="text-white font-bold text-sm">M</span>
             </div>
           )}
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -144,44 +143,52 @@ export function SideNav({ isCollapsed, setIsCollapsed }: SideNavProps) {
             )}
           </Button>
         </div>
-        
+
         {/* Navigation */}
         <div className="flex-1 overflow-auto py-2">
           <nav className="grid items-start px-2 text-sm font-medium">
-            {renderNavItems(navItemsWithTheme)}
+            {renderNavItems(filteredNavItems)}
           </nav>
         </div>
-        
+
         {/* User Profile and Logout */}
         <div className="p-4 border-t">
           {!isCollapsed ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 justify-between">
               <div className="flex flex-col">
                 <p className="text-sm font-medium">{session?.user?.name}</p>
                 <p className="text-xs text-muted-foreground">{userRole}</p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className="ml-auto"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <div>
+                <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                  {theme === "light" ? (
+                    <Moon className="h-4 w-4" />
+                  ) : (
+                    <Sun className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-              >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                {theme === "light" ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: "/login" })}
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -199,21 +206,17 @@ export function MobileNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { theme, toggleTheme } = useTheme();
-  const userRole = session?.user?.systemRole || 'User';
+  const userRole = getSessionUser(session)?.systemRole || "User";
 
   // Filter navigation items based on user role
-  const filteredNavItems = navigationConfig.filter(item => 
+  const filteredNavItems = navigationConfig.filter((item) =>
     item.roles.includes(userRole as any)
   );
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="ml-2 md:hidden"
-        >
+        <Button variant="outline" size="icon" className="ml-2 md:hidden">
           <Menu className="h-4 w-4" />
         </Button>
       </SheetTrigger>
@@ -229,11 +232,13 @@ export function MobileNav() {
                 return (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={item.href || ""}
                     onClick={() => setOpen(false)}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-                      isActive ? "bg-muted text-primary" : "text-muted-foreground"
+                      isActive
+                        ? "bg-muted text-primary"
+                        : "text-muted-foreground"
                     )}
                   >
                     {item.icon}
@@ -250,7 +255,11 @@ export function MobileNav() {
                   setOpen(false);
                 }}
               >
-                {theme === 'light' ? <Moon className="h-4 w-4 mr-2" /> : <Sun className="h-4 w-4 mr-2" />}
+                {theme === "light" ? (
+                  <Moon className="h-4 w-4 mr-2" />
+                ) : (
+                  <Sun className="h-4 w-4 mr-2" />
+                )}
                 <span>Toggle Theme</span>
               </Button>
             </nav>
@@ -264,7 +273,7 @@ export function MobileNav() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: "/login" })}
                 className="ml-auto"
               >
                 <LogOut className="h-4 w-4" />

@@ -6,6 +6,57 @@ import Module from '@/models/module.model';
 import { hasProjectPermission } from '@/lib/auth/utils';
 import { getSessionUser } from "@/lib/utils";
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { moduleId: string } }
+) {
+  try {
+    // Get the session
+    const session = await getServerSession(authOptions);
+    const sessionUser = getSessionUser(session);
+
+    // Check if the user is authenticated
+    if (!sessionUser) {
+      return NextResponse.json(
+        { error: "You must be logged in to access this resource" },
+        { status: 401 }
+      );
+    }
+
+    const { moduleId } = await params;
+
+    // Connect to the database
+    await dbConnect();
+
+    // Find the module by ID
+    const module = await Module.findById(moduleId);
+    if (!module) {
+      return NextResponse.json({ error: "Module not found" }, { status: 404 });
+    }
+
+    // Check if the user has permission to view this module
+    const hasPermission = await hasProjectPermission(
+      sessionUser.id,
+      module.projectId.toString(),
+      "Guest"
+    );
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: "You do not have permission to view this module" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(module);
+  } catch (error) {
+    console.error("Error fetching module:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { moduleId: string } }

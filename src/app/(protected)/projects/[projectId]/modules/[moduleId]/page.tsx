@@ -308,6 +308,9 @@ export default function ModulePage() {
 
   const handleCreateTask = async () => {
     try {
+      const startDate = newTaskStartDate?.toISOString().split("T")[0]; // Convert to YYYY-MM-DD format
+      const deadline = newTaskDeadline?.toISOString().split("T")[0]; // Convert to YYYY-MM-DD format
+
       const response = await fetch(`/api/modules/${moduleId}/tasks`, {
         method: "POST",
         headers: {
@@ -318,8 +321,8 @@ export default function ModulePage() {
           description: newTaskDescription,
           assigneeId: newTaskAssignee,
           priority: newTaskPriority,
-          startDate: newTaskStartDate,
-          deadline: newTaskDeadline,
+          startDate: startDate,
+          deadline: deadline,
         }),
       });
 
